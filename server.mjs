@@ -9,11 +9,13 @@ import {openWordDeck} from './word-deck-store.mjs';
 import {fileURLToPath} from 'node:url';
 const words=JSON.parse(await readFile(new URL('./words.json',import.meta.url),'utf8'));
 const deck=openWordDeck(words,fileURLToPath(new URL('./data/word-progress.json',import.meta.url)));
-const game=new Game(words,()=>Date.now(),Math.random,{deck}), clients=new Set();
-game.demo=false;game.start();game.pause();
 const scoreFile=new URL('./data/live-scores.json',import.meta.url);
-try{const saved=JSON.parse(readFileSync(scoreFile,'utf8'));for(const p of saved.players||[])if(typeof p.id==='string'&&typeof p.name==='string'&&Number.isFinite(p.score)&&p.score>=0)game.players.set(p.id,p);game.comments=(saved.comments||[]).slice(0,30);game.seen=new Set(saved.seen||game.comments.map(c=>c.id));}catch(e){if(e.code!=='ENOENT')throw e;}
-function saveScores(){const temp=new URL('./data/live-scores.tmp',import.meta.url);writeFileSync(temp,JSON.stringify({players:[...game.players.values()],comments:game.comments,seen:[...game.seen]}));renameSync(temp,scoreFile);}
+let saved={};try{saved=JSON.parse(readFileSync(scoreFile,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
+const game=new Game(words,()=>Date.now(),Math.random,{deck,sequence:saved.sequence,engagementState:saved.engagement}), clients=new Set();
+game.demo=false;game.start();game.pause();
+for(const p of saved.players||[])if(typeof p.id==='string'&&typeof p.name==='string'&&Number.isFinite(p.score)&&p.score>=0)game.players.set(p.id,p);
+game.comments=(saved.comments||[]).slice(0,30);game.seen=new Set(saved.seen||game.comments.map(c=>c.id));
+function saveScores(){const temp=new URL('./data/live-scores.tmp',import.meta.url);writeFileSync(temp,JSON.stringify({players:[...game.players.values()],comments:game.comments,seen:[...game.seen],sequence:game.sequence,engagement:game.engagement?.export()}));renameSync(temp,scoreFile);}
 let live={status:'demo',message:'Bình luận demo · chưa kết nối LIVE'}, connection, connecting=false;
 const send=()=>{const data=`data: ${JSON.stringify({...game.snapshot(),live})}\n\n`;for(const c of clients)c.write(data);};
 const result=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data));};
@@ -55,6 +57,7 @@ const server=http.createServer(async(req,res)=>{
    if(body.action==='start')game.start();else if(body.action==='pause')game.pause();else if(body.action==='next')game.next();else if(body.action==='reveal')game.reveal();else if(body.action==='reset')game.reset();
    else if(body.action==='duration'){const n=Number(body.value);if(![20,30,45].includes(n))throw Error('Thời gian không hợp lệ.');game.setDuration(n);}
    else if(body.action==='bots'){if(live.status==='connected'||connecting)throw Error('Ngắt LIVE trước khi bật bot.');game.demo=Boolean(body.value);}
+   else if(body.action==='scoreMode'){if(!['auto','total','stage'].includes(body.value))throw Error('Kiểu bảng điểm không hợp lệ.');game.engagement.scoreMode=body.value;}
    else throw Error('Lệnh không hợp lệ.');saveScores();
   }else if(url.pathname==='/api/connect'){const name=String(body.username||'').replace(/^@/,'');if(!/^[a-zA-Z0-9_.]{2,30}$/.test(name))throw Error('Nhập username TikTok hợp lệ.');await connect(name);}
   else if(url.pathname==='/api/disconnect'){if(connecting)throw Error('Chờ kết nối hoàn tất rồi ngắt.');if(connection){connection.removeAllListeners();connection.disconnect();connection=null;}live={status:'demo',message:'Bình luận demo · chưa kết nối LIVE'};game.demo=true;}
@@ -69,4 +72,5 @@ const server=http.createServer(async(req,res)=>{
  }catch(e){result(res,400,{error:e.message||'Không xử lý được yêu cầu.'});}
 });
 setInterval(send,100).unref();
+setInterval(saveScores,5000).unref();
 server.listen(3210,'127.0.0.1',()=>console.log('WordLive: http://127.0.0.1:3210 | Màn hình phát: http://127.0.0.1:3210/overlay'));

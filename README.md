@@ -113,3 +113,17 @@ python -m pip install --target work/tts-runtime gTTS==2.5.4
 ```
 
 Nếu Python không có trong PATH, đặt WORDLIVE_PYTHON thành đường dẫn python.exe trước khi chạy START.cmd. Mã nguồn và dữ liệu không cần Python để chơi; Python chỉ dùng khi cần tạo tệp giọng mới. Có thể chọn giọng vi-VN của trình duyệt nếu máy có giọng đó.
+
+
+## Giữ nhịp LIVE (04/11/2026)
+
+- Mốc chuỗi: khi đạt chuỗi 2, 5, 8… có lời nhắc hướng tới mốc vinh danh kế tiếp. Bình luận giao lưu, lệnh tra cứu và đoán sai không xóa chuỗi; hết vòng chưa đúng mới mất chuỗi.
+- Vòng thứ 5, 10, 15… có x2 điểm cho tất cả người trả lời đúng. Điểm vẫn tính một lần mỗi người mỗi vòng, dựa vào thời điểm gửi TikTok; chat đến trễ giữ hệ số của vòng gốc.
+- Đua chặng: khoảng 10 phút chơi, đóng chặng ở cuối vòng để không cắt ngang câu hỏi. Tạm dừng cũng đóng băng đồng hồ chặng. Có bảng điểm chặng riêng, kết quả chặng trước và tổng điểm cả buổi; bảng LIVE tự luân phiên tổng/chặng mỗi 10 giây. Chủ kênh đổi kiểu bảng ở bàn điều khiển.
+- Thử thách: đáp án đầu tiên, đúng 3 từ, đạt 100 điểm, lần đầu vào top 10. Huy hiệu từng người được lưu cùng điểm. Lệnh tra cứu cho biết tiến độ cá nhân.
+- Bình chọn: `!vote 1` đồ ăn, `!vote 2` tình cảm, `!vote 3` trường học. Một người một phiếu, đổi phiếu được; chủ đề thắng được áp dụng sau mỗi 5 từ mới. Từ trong chủ đề vẫn phải chưa dùng trong lượt. Nếu chủ đề đã hết từ mới, chọn từ tổng hợp chưa dùng; không lặp sớm để ép chủ đề.
+- Ôn tập: sau mỗi 10 từ mới, hai vòng được đánh dấu ÔN TẬP hỏi lại từ trong chặng vừa học. Đây là ngoại lệ ôn có chủ ý; không tiêu thụ hay đặt lại bộ từ mới. Vòng ôn vẫn có điểm và tính chuỗi.
+- `!diem` / `!chuoi`: kết quả hiển thị trong bình luận hệ thống trên overlay (không tự gửi tin nhắn vào TikTok). Mỗi người giới hạn một lệnh mỗi 2,5 giây để tránh spam. Không cần vào top 4 để có điểm hoặc tra cứu.
+- Thông báo bản cập nhật hiện 8 giây, một lần mỗi trình duyệt/nguồn và phiên bản, được nhớ bằng localStorage. Xóa dữ liệu trình duyệt sẽ làm mất dấu đã xem.
+
+Dữ liệu chặng, tổng thứ tự vòng, phiếu và huy hiệu được lưu riêng trên máy trong data/live-scores.json. Các nhật ký này không đưa lên GitHub. Chỉ nạp bản cập nhật máy chủ lúc vòng đang hiện đáp án; việc cập nhật vẫn cần vài giây kết nối lại chat. Tổng điểm và lịch sử được giữ; bản LIVE/điều khiển cần tải lại để lấy giao diện mới.
