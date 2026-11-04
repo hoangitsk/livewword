@@ -52,7 +52,7 @@ fixes = {
     'congratulations':'lời chúc mừng','characteristic':'đặc trưng',
     'disappointment':'sự thất vọng','representative':'người đại diện',
 }
-fixes.update({'from':'từ','cupboard':'tủ đựng đồ','gallon':'đơn vị đo thể tích galông','pint':'đơn vị đo thể tích panh','only':'chỉ','player':'người chơi','spoken':'được nói ra','wednesday':'thứ tư','your':'của bạn','yours':'của bạn','yourself':'chính bạn','abandon':'từ bỏ','absent':'vắng mặt','alphabetical':'thuộc bảng chữ cái','good':'tốt','bad':'xấu'})
+fixes.update({'from':'từ','cupboard':'tủ đựng đồ','gallon':'đơn vị đo thể tích galông','pint':'đơn vị đo thể tích panh','only':'chỉ','player':'người chơi','spoken':'được nói ra','wednesday':'thứ tư','your':'của bạn','yours':'của bạn','yourself':'chính bạn','abandon':'từ bỏ','absent':'vắng mặt','alphabetical':'thuộc bảng chữ cái','good':'tốt','bad':'xấu','smart':'thông minh','strong':'mạnh mẽ'})
 names={'n':'Danh từ','v':'Động từ','adj':'Tính từ','adv':'Trạng từ','prep':'Giới từ','conj':'Liên từ','pron':'Đại từ','det':'Từ hạn định'}
 out=[]; seen=set(); rejected=[]
 for row in rows:
