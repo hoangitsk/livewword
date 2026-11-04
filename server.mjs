@@ -1,5 +1,6 @@
 import http from 'node:http';
 import {readFile} from 'node:fs/promises';
+import {readFileSync,writeFileSync,renameSync,appendFileSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
 import {Game} from './game.mjs';
 import {synthesizeVoice} from './voice-cache.mjs';
@@ -10,6 +11,9 @@ const words=JSON.parse(await readFile(new URL('./words.json',import.meta.url),'u
 const deck=openWordDeck(words,fileURLToPath(new URL('./data/word-progress.json',import.meta.url)));
 const game=new Game(words,()=>Date.now(),Math.random,{deck}), clients=new Set();
 game.demo=false;game.start();game.pause();
+const scoreFile=new URL('./data/live-scores.json',import.meta.url);
+try{const saved=JSON.parse(readFileSync(scoreFile,'utf8'));for(const p of saved.players||[])if(typeof p.id==='string'&&typeof p.name==='string'&&Number.isFinite(p.score)&&p.score>=0)game.players.set(p.id,p);game.comments=(saved.comments||[]).slice(0,30);game.seen=new Set(saved.seen||game.comments.map(c=>c.id));}catch(e){if(e.code!=='ENOENT')throw e;}
+function saveScores(){const temp=new URL('./data/live-scores.tmp',import.meta.url);writeFileSync(temp,JSON.stringify({players:[...game.players.values()],comments:game.comments,seen:[...game.seen]}));renameSync(temp,scoreFile);}
 let live={status:'demo',message:'Bình luận demo · chưa kết nối LIVE'}, connection, connecting=false;
 const send=()=>{const data=`data: ${JSON.stringify({...game.snapshot(),live})}\n\n`;for(const c of clients)c.write(data);};
 const result=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data));};
@@ -23,7 +27,7 @@ async function connect(username){
   const Constructor=mod.TikTokLiveConnection||mod.WebcastPushConnection;
   if(!Constructor)throw Error('Phiên bản connector không tương thích.');
   const candidate=new Constructor(username,{processInitialData:false,...(process.env.TIKTOK_SIGN_API_KEY?{signApiKey:process.env.TIKTOK_SIGN_API_KEY}:{})});connection=candidate;
-  candidate.on('chat',d=>{if(live.status!=='connected')return;const chat=parseTikTokChat(d,randomUUID);if(!chat)return;game.comment(chat);send();});
+  candidate.on('chat',d=>{if(live.status!=='connected')return;const chat=parseTikTokChat(d,randomUUID);if(!chat)return;const points=game.comment(chat);if(points!==false){appendFileSync(new URL('./data/live-comments.jsonl',import.meta.url),JSON.stringify({...chat,points,receivedAt:Date.now()})+'\n');saveScores();}send();});
   candidate.on('error',()=>{live={status:'error',message:'Lỗi kết nối TikTok. Kiểm tra mạng, tài khoản đang LIVE và thử lại.'};send();});
   candidate.on('disconnected',()=>{live={status:'offline',message:'Đã mất kết nối LIVE. Bấm kết nối lại khi sẵn sàng.'};send();});
   await candidate.connect();live={status:'connected',message:`Đang nhận bình luận @${username}`};
@@ -51,7 +55,7 @@ const server=http.createServer(async(req,res)=>{
    if(body.action==='start')game.start();else if(body.action==='pause')game.pause();else if(body.action==='next')game.next();else if(body.action==='reveal')game.reveal();else if(body.action==='reset')game.reset();
    else if(body.action==='duration'){const n=Number(body.value);if(![20,30,45].includes(n))throw Error('Thời gian không hợp lệ.');game.setDuration(n);}
    else if(body.action==='bots'){if(live.status==='connected'||connecting)throw Error('Ngắt LIVE trước khi bật bot.');game.demo=Boolean(body.value);}
-   else throw Error('Lệnh không hợp lệ.');
+   else throw Error('Lệnh không hợp lệ.');saveScores();
   }else if(url.pathname==='/api/connect'){const name=String(body.username||'').replace(/^@/,'');if(!/^[a-zA-Z0-9_.]{2,30}$/.test(name))throw Error('Nhập username TikTok hợp lệ.');await connect(name);}
   else if(url.pathname==='/api/disconnect'){if(connecting)throw Error('Chờ kết nối hoàn tất rồi ngắt.');if(connection){connection.removeAllListeners();connection.disconnect();connection=null;}live={status:'demo',message:'Bình luận demo · chưa kết nối LIVE'};game.demo=true;}
   else return result(res,404,{error:'Không tìm thấy.'});send();return result(res,200,{ok:true});
