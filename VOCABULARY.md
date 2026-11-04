@@ -4,7 +4,7 @@ Nguồn hiện tại: 3000.pdf do người dùng cung cấp, tài liệu mang ti
 
 Mỗi từ chỉ giữ một nghĩa tiếng Việt. Bỏ phiên âm, nghĩa phụ sau dấu phẩy/chấm phẩy, ví dụ và chú thích; sửa một số nghĩa rõ ràng chưa chuẩn. Chỉ nhập từ đơn gồm chữ cái, dài 2–16 chữ; bỏ cụm từ, mục trùng và dòng không tách được nghĩa an toàn. Số từ chính xác xem words.json hoặc bảng điều khiển. Các từ đồng nghĩa có thể cùng nghĩa tiếng Việt; gợi ý có loại từ và số chữ cái. Chấm điểm vẫn theo đúng từ tiếng Anh của vòng hiện tại.
 
-Chưa rà soát thủ công toàn bộ bản dịch của PDF. Có thể sửa words.json để chọn nghĩa phù hợp hơn. Không tự gán giấy phép CC BY-SA của nguồn cũ cho tài liệu PDF này; không đưa PDF gốc lên kho mã. Các tệp giấy phép nguồn cũ trong licenses/ được giữ để truy vết lịch sử Git, không mô tả nguồn của bộ từ hiện tại.
+Đã rà soát toàn bộ 3.263 mục bằng AI ngày 04/11/2026: chỉnh 1.063 mục về nghĩa, chính tả hoặc loại từ; loại một mục lỗi tách chữ (suf); giữ 3.262 từ. Chọn một nghĩa thông dụng cho mỗi từ, không ghép nhiều nghĩa. Đây là rà soát ngôn ngữ bằng AI, chưa được chuyên gia từ điển thẩm định độc lập. Có thể sửa words.json nếu phát hiện điểm chưa phù hợp. Các chỉnh sửa được giữ trong tools/vocabulary-overrides.json để không mất khi nhập lại PDF. Không tự gán giấy phép CC BY-SA của nguồn cũ cho tài liệu PDF này; không đưa PDF gốc lên kho mã. Các tệp giấy phép nguồn cũ trong licenses/ được giữ để truy vết lịch sử Git, không mô tả nguồn của bộ từ hiện tại.
 
 Tạo lại: chạy tools/import-pdf-vocabulary.py với Python có pdfplumber, truyền đường dẫn PDF làm đối số. Công cụ cũ tools/build-vocabulary.mjs dành cho nguồn trước, không dùng để xây bộ hiện tại.
 

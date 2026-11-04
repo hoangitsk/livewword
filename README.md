@@ -98,7 +98,7 @@ Xem VERCEL.md để nhập repo lên Vercel. Vercel phục vụ màn hình phát
 
 ## Bộ hơn 3.000 từ và lịch sử không lặp (bản mới)
 
-Bộ từ đã tăng lên hơn 3.000 từ tiếng Anh, mỗi từ một nghĩa tiếng Việt lấy từ PDF do chủ kênh cung cấp; xem VOCABULARY.md. Có sửa một số lỗi nghĩa rõ ràng nhưng chưa kiểm duyệt thủ công toàn bộ.
+Bộ từ đã tăng lên hơn 3.000 từ tiếng Anh, mỗi từ một nghĩa tiếng Việt lấy từ PDF do chủ kênh cung cấp; xem VOCABULARY.md. Đã rà soát toàn bộ bằng AI; hiện có 3.262 từ, một nghĩa thông dụng mỗi từ. Chưa được chuyên gia ngôn ngữ thẩm định độc lập.
 
 Game lưu thứ tự xáo, lượt và các từ đã hiển thị trong **data/word-progress.json**. Không lặp lại trong cùng lượt, kể cả bấm Vòng tiếp, đặt lại điểm hoặc mở lại app. Chỉ khi hết bộ mới mở lượt tiếp. Đặt lại điểm không còn quay về từ đầu. Khi chuyển máy, chép cả thư mục data; không xóa tệp tiến độ nếu muốn giữ lịch sử. Nút Xuất lịch sử nằm ở bàn điều khiển. Lịch sử bắt đầu từ phiên bản cập nhật, không khôi phục các vòng trước khi tính năng này tồn tại.
 

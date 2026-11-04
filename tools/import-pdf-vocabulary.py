@@ -53,7 +53,7 @@ fixes = {
     'disappointment':'sự thất vọng','representative':'người đại diện',
 }
 fixes.update({'from':'từ','cupboard':'tủ đựng đồ','gallon':'đơn vị đo thể tích galông','pint':'đơn vị đo thể tích panh','only':'chỉ','player':'người chơi','spoken':'được nói ra','wednesday':'thứ tư','your':'của bạn','yours':'của bạn','yourself':'chính bạn','abandon':'từ bỏ','absent':'vắng mặt','alphabetical':'thuộc bảng chữ cái','good':'tốt','bad':'xấu','smart':'thông minh','strong':'mạnh mẽ'})
-names={'n':'Danh từ','v':'Động từ','adj':'Tính từ','adv':'Trạng từ','prep':'Giới từ','conj':'Liên từ','pron':'Đại từ','det':'Từ hạn định'}
+names={'n':'Danh từ','v':'Động từ','adj':'Tính từ','adv':'Trạng từ','prep':'Giới từ','conj':'Liên từ','pron':'Đại từ','det':'Từ hạn định','modal':'Động từ khuyết thiếu','prefix':'Tiền tố','exclamation':'Thán từ'}
 out=[]; seen=set(); rejected=[]
 for row in rows:
     en=row['en']
@@ -70,5 +70,13 @@ for row in rows:
 (root/'work/pdf-import').mkdir(exist_ok=True,parents=True)
 (root/'work/pdf-import/raw.json').write_text(json.dumps(rows,ensure_ascii=False,indent=2),encoding='utf-8')
 (root/'work/pdf-import/rejected.json').write_text(json.dumps(rejected,ensure_ascii=False,indent=2),encoding='utf-8')
+overrides=json.loads((root/'tools/vocabulary-overrides.json').read_text(encoding='utf-8'))
+out=[w for w in out if w['en']!='suf']
+for w in out:
+    value=overrides.get(w['en'])
+    if isinstance(value,list): w['vi'],w['pos']=value
+    elif value: w['vi']=value
+    w['hint']=f"{names.get(w['pos'],'Từ vựng')} · {len(w['en'])} chữ cái. Bạn đoán được từ này không?"
+out.sort(key=lambda w:w['en'])
 (root/'words.json').write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 print(json.dumps({'imported':len(out),'raw':len(rows),'rejected':len(rejected)}))
