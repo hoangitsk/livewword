@@ -15,3 +15,13 @@ Các thư mục bin/, work/, Tai-lieu/, node_modules/, live-site/ và .env* khô
 Chạy kiểm tra: node --test. Chạy thử build: node tools/build-vercel.mjs.
 
 Giấy phép bài nhạc trong MUSIC-LICENSE.txt phải được giữ nguyên khi chia sẻ/triển khai mã nguồn.
+
+## Bản đã triển khai
+
+- GitHub: https://github.com/hoangitsk/livewword
+- Vercel: https://livewword.vercel.app/overlay
+- Vercel Dashboard: https://vercel.com/album3/livewword
+- Tài khoản triển khai: ttyuy2425@gmail.com, nhóm Album (album3).
+- Tên miền riêng vẫn hoạt động: https://live.yniemdienanh.id.vn/overlay
+
+Đã kiểm tra HTTP 200 cho /overlay, /api/state và /app.js trên Vercel. Phần API phản ánh đúng trạng thái từ máy phát. Máy game và kết nối HTTPS trung gian vẫn phải hoạt động trong khi LIVE.
