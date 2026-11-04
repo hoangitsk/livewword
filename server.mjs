@@ -2,9 +2,13 @@ import http from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
 import {Game} from './game.mjs';
+import {synthesizeVoice} from './voice-cache.mjs';
+import {openWordDeck} from './word-deck-store.mjs';
+import {fileURLToPath} from 'node:url';
 const words=JSON.parse(await readFile(new URL('./words.json',import.meta.url),'utf8'));
-const game=new Game(words), clients=new Set();
-game.start();
+const deck=openWordDeck(words,fileURLToPath(new URL('./data/word-progress.json',import.meta.url)));
+const game=new Game(words,()=>Date.now(),Math.random,{deck}), clients=new Set();
+game.demo=false;game.start();game.pause();
 let live={status:'demo',message:'Bình luận demo · chưa kết nối LIVE'}, connection, connecting=false;
 const send=()=>{const data=`data: ${JSON.stringify({...game.snapshot(),live})}\n\n`;for(const c of clients)c.write(data);};
 const result=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data));};
@@ -28,7 +32,9 @@ const server=http.createServer(async(req,res)=>{
  try {
  const url=new URL(req.url,'http://localhost');
  if(req.method==='GET'&&url.pathname==='/events'){res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-cache','Connection':'keep-alive'});clients.add(res);send();req.on('close',()=>clients.delete(res));return;}
+ if(req.method==='GET'&&url.pathname==='/api/voice'){const bytes=await synthesizeVoice(url.searchParams.get('text')||'',url.searchParams.get('lang')||'',game.word);res.writeHead(200,{'Content-Type':'audio/mpeg','Content-Length':bytes.length,'Cache-Control':'private, max-age=86400'});res.end(bytes);return;}
  if(req.method==='GET'&&url.pathname==='/api/state')return result(res,200,{...game.snapshot(),live});
+ if(req.method==='GET'&&url.pathname==='/api/word-history')return result(res,200,{progress:deck.progress(),history:deck.history()});
  if(req.method==='GET'&&url.pathname==='/api/scores')return result(res,200,[...game.players.values()].sort((a,b)=>b.score-a.score));
  if(req.method==='POST'&&url.pathname.startsWith('/api/')){
   // Chỉ nhận lệnh từ cùng nguồn hoặc công cụ cục bộ; không mở máy chủ ra Internet.

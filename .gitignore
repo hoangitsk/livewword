@@ -13,3 +13,4 @@ live-site/
 *.tar.gz
 *.zip
 /public/voice/test.mp3
+/data/

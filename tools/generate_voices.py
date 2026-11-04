@@ -2,6 +2,7 @@
 Dịch vụ Google Translate qua gTTS (không chính thức), cần mạng lúc tạo.
 Khi phát game, chỉ sử dụng MP3 đã lưu; không gửi chat người xem ra dịch vụ.
 """
+import argparse
 import json
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
@@ -9,7 +10,10 @@ from gtts import gTTS
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'public'/'voice'
 OUT.mkdir(parents=True,exist_ok=True)
-words=json.loads((ROOT/'words.json').read_text(encoding='utf-8-sig'))
+parser=argparse.ArgumentParser(description='Tạo giọng mẫu; các từ khác được tạo và lưu khi chơi.')
+parser.add_argument('--limit',type=int,default=0,choices=range(31),help='Số từ tạo sẵn, tối đa 30; mặc định chỉ tạo 4 câu chung.')
+args=parser.parse_args()
+words=json.loads((ROOT/'words.json').read_text(encoding='utf-8-sig'))[:args.limit]
 items=[('vi','Chào mừng bạn đến với WordLive! Đoán thật nhanh để ghi điểm nhé!'),('vi','Một chữ đã mở. Bạn đoán được chưa?'),('vi','Còn năm giây. Chốt đáp án nào!'),('vi','Đáp án là')]
 for word in words:
  items.extend([('vi',f"Từ mới nhé. {word['vi']}. {word['hint']} Đoán từ tiếng Anh nào!"),('en',word['en']),('vi',word['vi']+'.')])
