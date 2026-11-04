@@ -3,6 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
 import {Game} from './game.mjs';
 import {synthesizeVoice} from './voice-cache.mjs';
+import {parseTikTokChat} from './tiktok-chat.mjs';
 import {openWordDeck} from './word-deck-store.mjs';
 import {fileURLToPath} from 'node:url';
 const words=JSON.parse(await readFile(new URL('./words.json',import.meta.url),'utf8'));
@@ -22,7 +23,7 @@ async function connect(username){
   const Constructor=mod.TikTokLiveConnection||mod.WebcastPushConnection;
   if(!Constructor)throw Error('Phiên bản connector không tương thích.');
   const candidate=new Constructor(username,{processInitialData:false,...(process.env.TIKTOK_SIGN_API_KEY?{signApiKey:process.env.TIKTOK_SIGN_API_KEY}:{})});connection=candidate;
-  candidate.on('chat',d=>{if(live.status!=='connected')return;const u=d.user||d;const userId=u.userId||u.uniqueId;if(!userId)return;game.comment({id:String(d.msgId||randomUUID()),userId:`live:${userId}`,name:u.nickname||u.uniqueId||'Người xem',text:d.comment,source:'live'});send();});
+  candidate.on('chat',d=>{if(live.status!=='connected')return;const chat=parseTikTokChat(d,randomUUID);if(!chat)return;game.comment(chat);send();});
   candidate.on('error',()=>{live={status:'error',message:'Lỗi kết nối TikTok. Kiểm tra mạng, tài khoản đang LIVE và thử lại.'};send();});
   candidate.on('disconnected',()=>{live={status:'offline',message:'Đã mất kết nối LIVE. Bấm kết nối lại khi sẵn sàng.'};send();});
   await candidate.connect();live={status:'connected',message:`Đang nhận bình luận @${username}`};
