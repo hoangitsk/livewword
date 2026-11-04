@@ -30,13 +30,22 @@ export class Game {
    points=10+Math.max(0,Math.ceil((window.deadline-(timed?sentAt:now))/1000));
    window.winners.add(userId);const p=this.players.get(userId)||{id:userId,name,score:0,wins:0};p.name=name;p.score+=points;p.wins++;
    p.correctRounds=[...new Set([...(p.correctRounds||[]),window.round])].sort((a,b)=>a-b).slice(-100);
-   let streak=1;for(let i=p.correctRounds.length-1;i>0&&p.correctRounds[i]-p.correctRounds[i-1]===1;i--)streak++;
-   p.streak=streak;p.bestStreak=Math.max(p.bestStreak||0,streak);if(streak%3===0&&window.round>=(p.lastHonorRound||0)){p.lastHonorRound=window.round;this.honor={id:`${userId}:${window.round}`,name,streak,expiresAt:now+5000};}
+   const eventTime=timed?sentAt:now,previous=p.lastCorrectRound??p.correctRounds.filter(n=>n!==window.round).at(-1);
+   if(eventTime>=(p.lastStreakEventAt||0)&&window.round>=(p.lastCorrectRound||0)){
+    p.streak=previous===window.round-1?(p.streak||0)+1:1;p.lastCorrectRound=window.round;p.lastStreakEventAt=eventTime;
+    p.bestStreak=Math.max(p.bestStreak||0,p.streak);
+    if(p.streak%3===0&&window.round>(p.lastHonorRound||0)){p.lastHonorRound=window.round;this.honor={id:`${userId}:${window.round}`,userId,name,streak:p.streak,expiresAt:now+5000};}
+   }
    this.players.set(userId,p);
+  }
+  if(eligible&&this.phase!=='paused'&&window&&normalize(text)!==normalize(window.word)){
+   const p=this.players.get(userId),eventTime=timed?sentAt:now;
+   if(p&&eventTime>=(p.lastStreakEventAt||0)){p.streak=0;p.lastStreakEventAt=eventTime;if(this.honor?.userId===userId)this.honor=null;}
   }
   this.comments.unshift({id,userId,name:String(name).slice(0,40),text:String(text).slice(0,180),points,source,...(timed?{sentAt}:{}),receivedAt:now});this.comments=this.comments.slice(0,30);return points;
  }
 
- snapshot(){this.tick();const effective=this.phase==='paused'?this.resumePhase:this.phase;const answer=effective==='answer';const ms=['playing','answer'].includes(this.phase)?Math.max(0,this.deadline-this.now()):this.remaining;return {round:this.round,generation:this.generation,phase:this.phase,duration:this.duration,seconds:Math.ceil(ms/1000),remainingMs:ms,vi:this.word.vi,hint:this.word.hint,letters:[...this.word.en].map((c,i)=>answer||i<this.revealed?c:'·'),answer:answer?this.word.en:null,winners:this.winners.size,leaders:[...this.players.values()].sort((a,b)=>b.score-a.score||NAMES.indexOf(a.name)-NAMES.indexOf(b.name)),honor:this.honor?.expiresAt>this.now()?this.honor:null,comments:this.comments,demo:this.demo,deck:this.deck.progress()};}
+ currentStreak(p){const last=p.lastCorrectRound??p.correctRounds?.at(-1),current=this.deck.progress().totalDisplayed;const playing=this.phase==='playing'||(this.phase==='paused'&&this.resumePhase==='playing');return last===current||(playing&&last===current-1)?p.streak||0:0;}
+ snapshot(){this.tick();const effective=this.phase==='paused'?this.resumePhase:this.phase;const answer=effective==='answer';const ms=['playing','answer'].includes(this.phase)?Math.max(0,this.deadline-this.now()):this.remaining;return {round:this.round,generation:this.generation,phase:this.phase,duration:this.duration,seconds:Math.ceil(ms/1000),remainingMs:ms,vi:this.word.vi,hint:this.word.hint,letters:[...this.word.en].map((c,i)=>answer||i<this.revealed?c:'·'),answer:answer?this.word.en:null,winners:this.winners.size,leaders:[...this.players.values()].map(p=>({...p,streak:this.currentStreak(p)})).sort((a,b)=>b.score-a.score||NAMES.indexOf(a.name)-NAMES.indexOf(b.name)),honor:this.honor?.expiresAt>this.now()?this.honor:null,comments:this.comments,demo:this.demo,deck:this.deck.progress()};}
 }
 
