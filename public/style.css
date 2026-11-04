@@ -84,3 +84,7 @@ hr{border:0;border-top:2px dashed var(--ink);opacity:.3;margin:22px 0}
 .engagement-strip{margin-top:7px;padding:4px 8px}.stage>.vi{font-size:40px}.stage>.q{margin-top:6px}.stage>.clue{min-height:28px}.stage>.tiles{margin-top:8px}.stage>.timer{margin-top:8px}.m{font-size:12px;line-height:16px;min-height:22px;padding:3px 8px}.rank-panels h2{line-height:12px}.release-note{position:absolute;z-index:12;top:48px;left:15px;right:15px;padding:14px;background:var(--cream);color:var(--dk);border:3px solid var(--dk);border-radius:12px;box-shadow:5px 5px 0 var(--dk);font-size:12px;line-height:1.5;animation:in .4s ease}.release-note strong{display:block;font-size:16px;color:var(--blue);margin-bottom:5px}
 
 .update-notice{padding:12px;background:var(--sun);color:var(--dk);border:2px solid var(--dk);border-radius:10px;font-size:13px;margin:12px 0}.update-notice[hidden]{display:none}.update-notice button{margin-top:8px}
+
+.vote-strip{padding:3px 5px;font-size:9px;line-height:13px}.vote-strip .command-help{display:block;font-size:10px;line-height:15px;color:var(--cream)}.vote-strip>span{display:block;overflow:hidden;text-overflow:ellipsis}
+
+.rank-panels .board,.streak-board{height:118px}.rank-panels .r{height:27px}

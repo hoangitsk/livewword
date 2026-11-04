@@ -1,4 +1,4 @@
-const CLIENT_VERSION='1f1a61b8e0283e7b';
+const CLIENT_VERSION='cb15fd6a40081407';
 import {LiveAudio} from '/audio.mjs';
 const $=id=>document.getElementById(id), stage=$('stage');
 const overlay=location.pathname==='/overlay';if(overlay)document.body.classList.add('overlay');
@@ -45,9 +45,9 @@ function render(s){
  }
  const mode=feature?.scoreMode||'auto';if($('score-mode'))$('score-mode').value=mode;const useStage=feature&&(mode==='stage'||(mode==='auto'&&Math.floor(Date.now()/10000)%2===1));
  const scoreLeaders=useStage?feature.stage.leaders:s.leaders;
- if($('score-heading'))$('score-heading').textContent=useStage?'🏆 CHẶNG '+feature.stage.number:'⭐ TỔNG ĐIỂM';
+ if($('score-heading'))$('score-heading').textContent=useStage?'🏆 TOP CHẶNG '+feature.stage.number:'⭐ TỔNG ĐIỂM';
  const present=new Set();scoreLeaders.forEach((p,i)=>{present.add(p.id);let row=rows.get(p.id);if(!row){row=el('div','r');row.append(el('span','av',p.name.trim().split(/\s+/).at(-1).slice(0,1)),el('span','n',p.name),el('span','p',p.score+' đ'));row.children[0].style.background=colors[rows.size%colors.length];row.dataset.score=p.score;if(!first&&p.score>0)row.children[2].classList.add('bump');rows.set(p.id,row);$('board').append(row);}
- row.style.transform=`translateY(${i*33}px)`;row.style.opacity=i<4?'1':'0';row.setAttribute('aria-hidden',String(i>=4));row.classList.toggle('first',i===0&&p.score>0);row.children[1].textContent=p.name;
+ row.style.transform=`translateY(${i*30}px)`;row.style.opacity=i<4?'1':'0';row.setAttribute('aria-hidden',String(i>=4));row.classList.toggle('first',i===0&&p.score>0);row.children[1].textContent=p.name;
  if(Number(row.dataset.score)!==p.score){const point=row.children[2];point.textContent=p.score+' đ';point.classList.remove('bump');void point.offsetWidth;point.classList.add('bump');row.dataset.score=p.score;}
  });for(const [id,r] of rows)if(!present.has(id)){r.remove();rows.delete(id);}
  $('connection').textContent=s.live.message;$('bots').checked=s.demo;const active=['connecting','connected'].includes(s.live.status);$('bots').disabled=active;$('who').disabled=active;$('ans').disabled=active;$('send').disabled=active;$('connect').disabled=s.live.status==='connecting';
@@ -56,12 +56,13 @@ function render(s){
  $('vi').style.fontSize=s.vi.length>25?'27px':s.vi.length>16?'34px':'';
  if(feature){
   if(!releaseShown&&feature.version&&(!s.clientVersion||s.clientVersion===CLIENT_VERSION)){releaseShown=true;const key='wordlive-release-'+feature.version;let seen=false;try{seen=localStorage.getItem(key)==='seen';}catch{}if(!seen){const note=el('div','release-note');note.append(el('strong','','✨ ĐÃ CẬP NHẬT'),document.createTextNode('Vòng x2 · Đua chặng 10 phút · Thử thách cá nhân · Chọn chủ đề · Ôn từ · Tra !diem / !chuoi. Giao lưu không mất chuỗi!'));stage.append(note);try{localStorage.setItem(key,'seen');}catch{}setTimeout(()=>note.remove(),8000);}}
-  const secs=feature.stage.seconds;$('stage-label').textContent='🏆 Chặng '+feature.stage.number;$('stage-clock').textContent=Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0');
+  const secs=feature.stage.seconds;$('stage-label').textContent='🏆 ĐUA CHẶNG '+feature.stage.number;$('stage-clock').textContent=Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0');
   $('bonus-label').textContent=feature.isReview?'🧠 ÔN TẬP'+(feature.multiplier===2?' · x2':''):feature.multiplier===2?'⚡ X2 ĐIỂM':'⚡ X2 sau '+feature.nextBonusIn+' vòng';
   $('engagement-strip').classList.toggle('bonus',feature.multiplier===2);$('engagement-strip').classList.toggle('review',feature.isReview);
-  const rescue=feature.rescue;const rotate=Math.floor(Date.now()/5000)%3;
-  $('mission-line').textContent=feature.notice&&!feature.notice.title.startsWith('🏆')?`🎯 ${feature.notice.name}: ${feature.notice.detail}`:secs===0?'🏁 Hết vòng này mở chặng mới!':rescue&&rotate===0?`🔥 ${rescue.name}: đúng thêm 1 vòng để đạt chuỗi ${rescue.target}!`:rotate===1?'🎯 Đúng 3 từ · Ghi 100 điểm · Vào top 10':'📚 '+feature.topic+' · '+(feature.isReview?'Nhớ lại từ đã học':'Ôn tập sau '+feature.reviewIn+' từ');
-  $('vote-strip').textContent=feature.topics.map(t=>`${t.code} ${t.label} (${t.votes})`).join(' · ')+' | !vote 1/2/3';
+  const previousStage=feature.stage.previous;const raceText=previousStage?.winner?`🏆 Chặng ${previousStage.number}: ${previousStage.winner.name} thắng ${previousStage.winner.score}đ`:'🏆 Đua 10 phút · Người nhiều điểm chặng nhất thắng!';
+  const rescue=feature.rescue;const rotate=Math.floor(Date.now()/5000)%4;
+  $('mission-line').textContent=feature.notice&&!feature.notice.title.startsWith('🏆')?`🎯 ${feature.notice.name}: ${feature.notice.detail}`:secs===0?'🏁 Hết vòng này mở chặng mới!':rotate===0?raceText:rescue&&rotate===1?`🔥 ${rescue.name}: đúng thêm 1 vòng để đạt chuỗi ${rescue.target}!`:rotate===2?'🎯 Đúng 3 từ · Ghi 100 điểm · Vào top 10':'📚 '+feature.topic+' · '+(feature.isReview?'Nhớ lại từ đã học':'Ôn tập sau '+feature.reviewIn+' từ');
+  $('vote-options').textContent=`🗳 Chốt sau ${feature.topicVoteIn??30} từ: !vote 1 Ăn · 2 Tình cảm · 3 Học`;
   $('engagement-summary').textContent=`Chặng ${feature.stage.number} còn ${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')} · Chủ đề: ${feature.topic} · ${feature.isReview?'Đang ôn tập':'Vòng '+feature.roundNumber} · Điểm x${feature.multiplier}.`;
   const previous=feature.stage.previous;$('stage-champion').textContent=previous?.winner?`🏆 Chặng ${previous.number}: ${previous.winner.name} — ${previous.winner.score} điểm.`:'Chặng đầu đang diễn ra. Điểm chặng và tổng điểm được tính riêng.';
  }
