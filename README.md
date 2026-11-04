@@ -127,3 +127,8 @@ Nếu Python không có trong PATH, đặt WORDLIVE_PYTHON thành đường dẫ
 - Thông báo bản cập nhật hiện 8 giây, một lần mỗi trình duyệt/nguồn và phiên bản, được nhớ bằng localStorage. Xóa dữ liệu trình duyệt sẽ làm mất dấu đã xem.
 
 Dữ liệu chặng, tổng thứ tự vòng, phiếu và huy hiệu được lưu riêng trên máy trong data/live-scores.json. Các nhật ký này không đưa lên GitHub. Chỉ nạp bản cập nhật máy chủ lúc vòng đang hiện đáp án; việc cập nhật vẫn cần vài giây kết nối lại chat. Tổng điểm và lịch sử được giữ; bản LIVE/điều khiển cần tải lại để lấy giao diện mới.
+
+
+## Cập nhật mà không tắt buổi LIVE
+
+Chạy `node tools/build-vercel.mjs` trước khi đẩy mã; công cụ tự gắn dấu phiên bản theo nội dung giao diện. Máy chủ thông báo phiên bản mới qua trạng thái game. Overlay chỉ tự tải lại khi đáp án đang hiện và đã kiểm tra tệp giao diện mới tải được; không yêu cầu tắt Go LIVE. Có chống tải lại lặp nếu CDN chưa đồng bộ. Bàn điều khiển không tự tải lại để giữ nhạc/MC, chỉ hiện nút cập nhật. Cần tải lại nguồn Link một lần để cài cơ chế này cho nguồn đang mở từ phiên bản cũ.

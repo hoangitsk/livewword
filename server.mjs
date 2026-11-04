@@ -17,7 +17,9 @@ for(const p of saved.players||[])if(typeof p.id==='string'&&typeof p.name==='str
 game.comments=(saved.comments||[]).slice(0,30);game.seen=new Set(saved.seen||game.comments.map(c=>c.id));
 function saveScores(){const temp=new URL('./data/live-scores.tmp',import.meta.url);writeFileSync(temp,JSON.stringify({players:[...game.players.values()],comments:game.comments,seen:[...game.seen],sequence:game.sequence,engagement:game.engagement?.export()}));renameSync(temp,scoreFile);}
 let live={status:'demo',message:'Bình luận demo · chưa kết nối LIVE'}, connection, connecting=false;
-const send=()=>{const data=`data: ${JSON.stringify({...game.snapshot(),live})}\n\n`;for(const c of clients)c.write(data);};
+let clientVersion='';async function readClientVersion(){try{clientVersion=(await readFile(new URL('./public/app.js',import.meta.url),'utf8')).match(/^const CLIENT_VERSION='([^']+)'/m)?.[1]||'';}catch{}}
+await readClientVersion();setInterval(readClientVersion,2000).unref();
+const send=()=>{const data=`data: ${JSON.stringify({...game.snapshot(),live,clientVersion})}\n\n`;for(const c of clients)c.write(data);};
 const result=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data));};
 async function connect(username){
  if(connecting)throw Error('Đang kết nối, vui lòng chờ.');
@@ -40,7 +42,7 @@ const server=http.createServer(async(req,res)=>{
  const url=new URL(req.url,'http://localhost');
  if(req.method==='GET'&&url.pathname==='/events'){res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-cache','Connection':'keep-alive'});clients.add(res);send();req.on('close',()=>clients.delete(res));return;}
  if(req.method==='GET'&&url.pathname==='/api/voice'){const bytes=await synthesizeVoice(url.searchParams.get('text')||'',url.searchParams.get('lang')||'',game.word);res.writeHead(200,{'Content-Type':'audio/mpeg','Content-Length':bytes.length,'Cache-Control':'private, max-age=86400'});res.end(bytes);return;}
- if(req.method==='GET'&&url.pathname==='/api/state')return result(res,200,{...game.snapshot(),live});
+ if(req.method==='GET'&&url.pathname==='/api/state')return result(res,200,{...game.snapshot(),live,clientVersion});
  if(req.method==='GET'&&url.pathname==='/api/word-history')return result(res,200,{progress:deck.progress(),history:deck.history()});
  if(req.method==='GET'&&url.pathname==='/api/scores')return result(res,200,[...game.players.values()].sort((a,b)=>b.score-a.score));
  if(req.method==='POST'&&url.pathname.startsWith('/api/')){

@@ -1,3 +1,4 @@
+const CLIENT_VERSION='1f1a61b8e0283e7b';
 import {LiveAudio} from '/audio.mjs';
 const $=id=>document.getElementById(id), stage=$('stage');
 const overlay=location.pathname==='/overlay';if(overlay)document.body.classList.add('overlay');
@@ -11,7 +12,21 @@ function el(tag,cls,text=''){const e=document.createElement(tag);e.className=cls
 async function api(path,body){try{const r=await fetch('/api/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw Error(d.error);$('notice').textContent='';return true;}catch(e){$('notice').textContent=e.message;return false;}}
 function flip(tile,ch,answer,delay=0){tileTimers.push(setTimeout(()=>{if(reduced()){tile.textContent=ch;tile.className='tile '+(answer?'ok':'hint');return;}tile.classList.remove('flip');void tile.offsetWidth;tile.style.animationDelay='0s';tile.classList.add('flip');tileTimers.push(setTimeout(()=>{tile.textContent=ch;tile.classList.toggle('hint',!answer);tile.classList.toggle('ok',answer);},220));},delay));}
 function confetti(){if(reduced())return;for(let i=0;i<30;i++){const c=el('i','cf');c.style.left=Math.random()*100+'%';c.style.background=[...colors,'#27D8A1','#fff'][i%7];c.style.animationDelay=Math.random()*.5+'s';stage.append(c);setTimeout(()=>c.remove(),2400);}}
+let updateTarget='',updateReady=false,updateChecking=false,lastUpdateCheck=0;
+function checkUpdate(s){
+ const target=s.clientVersion;if(!target||target===CLIENT_VERSION)return;
+ if(target!==updateTarget){updateTarget=target;updateReady=false;}
+ if(!updateReady&&!updateChecking&&Date.now()-lastUpdateCheck>10000){updateChecking=true;lastUpdateCheck=Date.now();fetch('/app.js?v='+encodeURIComponent(target),{cache:'no-store'}).then(r=>r.ok?r.text():Promise.reject()).then(js=>{updateReady=js.includes("const CLIENT_VERSION='"+target+"'");}).catch(()=>{}).finally(()=>{updateChecking=false;});}
+ if(!updateReady)return;
+ if(!overlay){$('update-notice').hidden=false;return;}
+ if(s.phase==='answer'&&s.remainingMs<=4000&&s.remainingMs>800){
+  let previous=0;try{previous=Number(sessionStorage.getItem('wordlive-update-'+target)||0);}catch{}
+  if(Date.now()-previous<60000)return;try{sessionStorage.setItem('wordlive-update-'+target,String(Date.now()));}catch{}
+  location.reload();
+ }
+}
 function render(s){
+ checkUpdate(s);
  const roundKey=(s.sequence??s.deck?.totalDisplayed??0)+':'+s.round+':'+s.generation;const newRound=round!==roundKey;const first=round===undefined;
  if(newRound){tileTimers.forEach(clearTimeout);tileTimers=[];stage.querySelectorAll('.cf').forEach(c=>c.remove());$('rd').textContent='Vòng '+s.round;$('vi').textContent=s.vi;$('clue').textContent=s.hint;$('cnt').textContent=s.letters.length+' chữ cái, gợi ý sẽ dần hiện ra';$('tiles').classList.toggle('long-word',s.letters.length>11);$('tiles').replaceChildren(...s.letters.map((ch,i)=>{const t=el('div','tile',ch==='·'?'':ch);t.dataset.value=ch;t.style.animationDelay=i*.05+'s';if(ch!=='·')t.classList.add(s.answer?'ok':'hint');return t;}));}
  else s.letters.forEach((ch,i)=>{const t=$('tiles').children[i];if(t.dataset.value!==ch){t.dataset.value=ch;flip(t,ch,Boolean(s.answer),s.answer?i*70:0);}else if(s.answer){t.classList.remove('hint');t.classList.add('ok');}});
@@ -40,7 +55,7 @@ function render(s){
  if(s.deck){$('deck-counter').textContent=`Lượt ${s.deck.cycle} · Đã hiện ${s.deck.shown}/${s.deck.total} từ`;$('deck-summary').textContent=`Lượt ${s.deck.cycle}: đã hiện ${s.deck.shown}/${s.deck.total}, còn ${s.deck.remaining} từ chưa hiện. Lịch sử giữ qua lần mở app.`;}
  $('vi').style.fontSize=s.vi.length>25?'27px':s.vi.length>16?'34px':'';
  if(feature){
-  if(!releaseShown&&feature.version){releaseShown=true;const key='wordlive-release-'+feature.version;let seen=false;try{seen=localStorage.getItem(key)==='seen';}catch{}if(!seen){const note=el('div','release-note');note.append(el('strong','','✨ ĐÃ CẬP NHẬT'),document.createTextNode('Vòng x2 · Đua chặng 10 phút · Thử thách cá nhân · Chọn chủ đề · Ôn từ · Tra !diem / !chuoi. Giao lưu không mất chuỗi!'));stage.append(note);try{localStorage.setItem(key,'seen');}catch{}setTimeout(()=>note.remove(),8000);}}
+  if(!releaseShown&&feature.version&&(!s.clientVersion||s.clientVersion===CLIENT_VERSION)){releaseShown=true;const key='wordlive-release-'+feature.version;let seen=false;try{seen=localStorage.getItem(key)==='seen';}catch{}if(!seen){const note=el('div','release-note');note.append(el('strong','','✨ ĐÃ CẬP NHẬT'),document.createTextNode('Vòng x2 · Đua chặng 10 phút · Thử thách cá nhân · Chọn chủ đề · Ôn từ · Tra !diem / !chuoi. Giao lưu không mất chuỗi!'));stage.append(note);try{localStorage.setItem(key,'seen');}catch{}setTimeout(()=>note.remove(),8000);}}
   const secs=feature.stage.seconds;$('stage-label').textContent='🏆 Chặng '+feature.stage.number;$('stage-clock').textContent=Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0');
   $('bonus-label').textContent=feature.isReview?'🧠 ÔN TẬP'+(feature.multiplier===2?' · x2':''):feature.multiplier===2?'⚡ X2 ĐIỂM':'⚡ X2 sau '+feature.nextBonusIn+' vòng';
   $('engagement-strip').classList.toggle('bonus',feature.multiplier===2);$('engagement-strip').classList.toggle('review',feature.isReview);
@@ -63,3 +78,5 @@ $('export').onclick=async()=>{try{const r=await fetch('/api/scores');if(!r.ok)th
 $('word-history').onclick=async()=>{try{const r=await fetch('/api/word-history');if(!r.ok)throw Error('Lịch sử chỉ xuất được trên bàn điều khiển của máy phát.');const d=await r.json();const cell=v=>'\"'+String(v).replace(/^[=+@-]/,"'$&").replaceAll('\"','\"\"')+'\"';const csv='\uFEFF'+[['STT','Lượt','Từ tiếng Anh','Nghĩa','Thời điểm hiển thị'],...d.history.map(e=>[e.sequence,e.cycle,e.word,e.vi,e.displayedAt])].map(row=>row.map(cell).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=el('a','');a.href=url;a.download='wordlive-lich-su-tu.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(e){$('notice').textContent=e.message;}};
 
 if($('score-mode'))$('score-mode').onchange=e=>api('control',{action:'scoreMode',value:e.target.value});
+
+$('apply-update').onclick=()=>location.reload();
