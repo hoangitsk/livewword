@@ -1,0 +1,24 @@
+MUSIC CREDIT / LICENSE — WORDLIVE
+
+Title: EDM Detection Mode
+Artist: Kevin MacLeod (incompetech.com)
+License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+License URL: https://creativecommons.org/licenses/by/4.0/
+Track source: https://incompetech.com/music/royalty-free/index.html?Search=Search&isrc=USUAN1500026
+Official YouTube: https://www.youtube.com/watch?v=laHl-aFZUJI
+Downloaded from official artist site:
+https://incompetech.com/music/royalty-free/mp3-royaltyfree/EDM%20Detection%20Mode.mp3
+Verified 2026-11-04.
+
+The supplied MP3 is unchanged. WordLive defaults to playback from 120s to 210s, looping that section. Volume is reduced while narration speaks. If you retain this playback edit, indicate it in your credit. This license requires attribution, a license link, and indication of modifications. Keep this file with redistributed copies.
+
+COPY INTO LIVE DESCRIPTION / VIDEO DESCRIPTION:
+"EDM Detection Mode" Kevin MacLeod (incompetech.com)
+Licensed under Creative Commons: By Attribution 4.0
+https://creativecommons.org/licenses/by/4.0/
+https://incompetech.com/music/royalty-free/index.html?Search=Search&isrc=USUAN1500026
+Excerpt looped for background music; volume adjusted under narration.
+
+This is licensed copyrighted music, not public-domain music. No guarantee against automated matching/claims on any platform. Keep the source and license records. The supplied license does not authorize other recordings/remixes such as "2 Phút Hơn" or "Tuổi Trẻ Tương Lai"; verify each recording separately.
+
+Audio cues (countdown, correct answer, reveal) are synthesized by WordLive code. Default narration uses 22 locally saved clips generated via gTTS (Google Translate TTS through an unofficial client). Optional browser/OS voices depend on availability. Text is generic vocabulary content; viewer comments were not sent for synthesis. No voice clone is included.

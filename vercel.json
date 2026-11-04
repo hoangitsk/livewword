@@ -1,0 +1,1 @@
+{"$schema":"https://openapi.vercel.sh/vercel.json","framework":null,"buildCommand":"node tools/build-vercel.mjs","outputDirectory":"dist","redirects":[{"source":"/","destination":"/overlay","permanent":false}],"rewrites":[{"source":"/overlay","destination":"/index.html"}]}

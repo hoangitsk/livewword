@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WordLive</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css"></head>
+<body><div class="wrap">
+<div class="stage" id="stage" data-z="hi">
+  <div class="top"><div class="logo"><i>W</i>WordLive</div><span class="chip" id="rd">Vòng 1</span></div>
+  <p class="q">Từ này tiếng Anh là gì?</p>
+  <div class="vi" id="vi"></div>
+  <p class="clue" id="clue"></p>
+  <div class="tiles" id="tiles"></div>
+  <p class="cnt" id="cnt"></p>
+  <div class="timer"><div class="fuse"><b id="fill"></b></div><div class="num" id="num">30</div></div>
+  <p class="state" id="state"></p>
+  <div class="feed" id="feed"></div>
+  <div class="board" id="board"></div>
+  <a class="music-credit" id="music-credit" href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">♫ EDM Detection Mode · Kevin MacLeod · CC BY 4.0</a><div class="tick"><span>Gõ đáp án vào bình luận để ghi điểm. Đoán càng nhanh, điểm càng cao. Gõ đáp án vào bình luận để ghi điểm. Đoán càng nhanh, điểm càng cao. </span></div>
+</div>
+<section class="panel">
+  <h1>Hôm nay học gì nào?</h1>
+  <p class="sub">Điều khiển vòng chơi khi đang LIVE. Hết giờ, đáp án hiện 5 giây rồi tự chuyển vòng.</p>
+  <div class="btns"><button class="b main" id="go">Tạm dừng</button><button class="b" id="rev">Lật đáp án</button><button class="b" id="next">Vòng tiếp</button></div>
+  <label class="f">Thời gian mỗi vòng <select id="dur"><option>20</option><option selected>30</option><option>45</option></select> giây</label>
+  <hr><section class="audio-panel"><h2>♫ Nhạc & MC tự động</h2><p class="note">EDM nhịp nhanh + lời dẫn theo vòng. Chỉ bật âm thanh ở một cửa sổ.</p><div class="btns audio-buttons"><button class="b main" id="audio-toggle">Bật âm thanh</button><button class="b" id="voice-test">Nghe thử MC</button></div><p id="audio-status" class="note" role="status">Chưa bật · bấm nút để trình duyệt cho phép phát.</p><label class="f"><input type="checkbox" id="music-on" checked> Nhạc nền EDM</label><label class="f">Âm lượng nhạc <input type="range" id="music-volume" min="0" max="100" value="20"><output id="music-value">20%</output></label><label class="f">Bắt đầu từ giây <input type="number" id="music-offset" min="0" value="120" step="1"></label><label class="f">Lặp đến giây <input type="number" id="music-end" min="0" value="210" step="1"> <small>0 = hết bài</small></label><label class="f"><input type="checkbox" id="tts" checked> MC dẫn tự động tiếng Việt</label><label class="f">Giọng đọc <select id="voice-select"><option value="">Đang tìm giọng tiếng Việt…</option></select></label><label class="f">Âm lượng MC <input type="range" id="voice-volume" min="0" max="100" value="90"><output id="voice-value">90%</output></label><label class="f"><input type="checkbox" id="sfx-on" checked> Âm báo đúng, đếm ngược, công bố đáp án</label><details><summary>Đổi nhạc & thông tin sử dụng</summary><p class="note">Mặc định: EDM Detection Mode — Kevin MacLeod, CC BY 4.0. Có bass dồn, không phải bản remix 2 Phút Hơn.</p><p class="note"><a href="https://www.youtube.com/watch?v=laHl-aFZUJI" target="_blank" rel="noopener">Nghe trên YouTube ↗</a> · <a href="https://incompetech.com/music/royalty-free/index.html?Search=Search&isrc=USUAN1500026" target="_blank" rel="noopener">Nguồn & giấy phép ↗</a></p><button class="b" id="copy-credit">Chép ghi nguồn cho LIVE</button><label class="f">Nhạc riêng (có quyền sử dụng)<input type="file" id="music-file" accept="audio/*"></label><label class="f">Ghi nguồn nhạc riêng<input type="text" id="custom-credit" placeholder="Tên bài — tác giả — giấy phép"></label><button class="link" id="default-track">Về bài mặc định</button></details><p class="note">Nhạc tự nhỏ lại khi MC nói. Thu âm cửa sổ trình duyệt/âm thanh máy trong OBS hoặc LIVE Studio; overlay không tự phát tiếng.</p></section>
+  <hr>
+  <h2>Thử bình luận</h2>
+  <label class="f">Tên <input type="text" id="who" value="Minh Anh"></label>
+  <label class="f">Đáp án <input type="text" id="ans" placeholder="Nhập từ tiếng Anh" autocomplete="off"><button class="b main" id="send">Gửi</button></label>
+  <p class="note">Đúng được 10 điểm cộng số giây còn lại. Mỗi người chỉ ghi điểm một lần mỗi vòng.</p>
+  <button class="link" id="reset">Đặt lại điểm</button><hr><details><summary>Kết nối TikTok LIVE & xuất điểm</summary><p class="note" id="connection">Chế độ demo.</p><label class="f"><input id="bots" type="checkbox" checked> Bật 8 bot demo</label><label class="f">TikTok <input type="text" id="username" placeholder="@username"></label><div class="btns"><button class="b" id="connect">Kết nối</button><button class="b" id="disconnect">Dùng demo</button><button class="b" id="export">Xuất CSV</button></div><p class="note">Kết nối không chính thức, chưa kiểm chứng với phòng LIVE thật. Giới hạn 9 tên chỉ áp dụng demo; bình luận LIVE thật được chấm cho mọi người.</p></details><p class="note" id="notice" role="status"></p><a class="overlay-link" href="/overlay" target="_blank" rel="noopener">Mở màn hình phát 9:16 ↗</a>
+</section></div>
+<script type="module" src="/app.js"></script></body></html>

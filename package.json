@@ -1,0 +1,17 @@
+{
+  "name": "wordlive",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test",
+    "build": "node tools/build-vercel.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "tiktok-live-connector": "2.5.0"
+  }
+}
