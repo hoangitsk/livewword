@@ -23,6 +23,10 @@ function render(s){
   if(knownComments.size>300)knownComments=new Set(s.comments.map(c=>c.id));lastComments=commentsKey;
  }
  const honor=s.honor;const banner=$('honor');if(banner){banner.hidden=!honor;if(honor){$('honor-name').textContent=honor.name;$('honor-streak').textContent=honor.streak+' vòng đúng liên tiếp!';if(banner.dataset.id!==honor.id){banner.dataset.id=honor.id;confetti();}}}
+ const streakBoard=$('streak-board');if(streakBoard){
+  const champions=s.leaders.map(p=>{let best=p.bestStreak||0,run=0,last=-2;for(const n of [...new Set(p.correctRounds||[])].sort((a,b)=>a-b)){run=n===last+1?run+1:1;best=Math.max(best,run);last=n;}return {...p,best};}).filter(p=>p.best>=3).sort((a,b)=>b.best-a.best||b.score-a.score).slice(0,3);
+  const signature=JSON.stringify(champions.map(p=>[p.id,p.name,p.best]));if(streakBoard.dataset.signature!==signature){streakBoard.dataset.signature=signature;streakBoard.replaceChildren();if(!champions.length)streakBoard.append(el('p','streak-empty','Đúng 3 vòng liên tiếp để được ghi danh!'));champions.forEach((p,i)=>{const row=el('div','streak-row');row.append(el('span','streak-medal',['🥇','🥈','🥉'][i]),el('span','streak-name',p.name),el('b','streak-value',p.best+' 🔥'));row.title=p.name+' · '+p.best+' vòng đúng liên tiếp';streakBoard.append(row);});}
+ }
  const present=new Set();s.leaders.forEach((p,i)=>{present.add(p.id);let row=rows.get(p.id);if(!row){row=el('div','r');row.append(el('span','av',p.name.trim().split(/\s+/).at(-1).slice(0,1)),el('span','n',p.name),el('span','p',p.score+' đ'));row.children[0].style.background=colors[rows.size%colors.length];row.dataset.score=p.score;if(!first&&p.score>0)row.children[2].classList.add('bump');rows.set(p.id,row);$('board').append(row);}
  row.style.transform=`translateY(${i*33}px)`;row.style.opacity=i<4?'1':'0';row.setAttribute('aria-hidden',String(i>=4));row.classList.toggle('first',i===0&&p.score>0);row.children[1].textContent=p.name;
  if(Number(row.dataset.score)!==p.score){const point=row.children[2];point.textContent=p.score+' đ';point.classList.remove('bump');void point.offsetWidth;point.classList.add('bump');row.dataset.score=p.score;}

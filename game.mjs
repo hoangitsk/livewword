@@ -31,7 +31,7 @@ export class Game {
    window.winners.add(userId);const p=this.players.get(userId)||{id:userId,name,score:0,wins:0};p.name=name;p.score+=points;p.wins++;
    p.correctRounds=[...new Set([...(p.correctRounds||[]),window.round])].sort((a,b)=>a-b).slice(-100);
    let streak=1;for(let i=p.correctRounds.length-1;i>0&&p.correctRounds[i]-p.correctRounds[i-1]===1;i--)streak++;
-   p.streak=streak;if(streak%3===0&&window.round>=(p.lastHonorRound||0)){p.lastHonorRound=window.round;this.honor={id:`${userId}:${window.round}`,name,streak,expiresAt:now+5000};}
+   p.streak=streak;p.bestStreak=Math.max(p.bestStreak||0,streak);if(streak%3===0&&window.round>=(p.lastHonorRound||0)){p.lastHonorRound=window.round;this.honor={id:`${userId}:${window.round}`,name,streak,expiresAt:now+5000};}
    this.players.set(userId,p);
   }
   this.comments.unshift({id,userId,name:String(name).slice(0,40),text:String(text).slice(0,180),points,source,...(timed?{sentAt}:{}),receivedAt:now});this.comments=this.comments.slice(0,30);return points;
