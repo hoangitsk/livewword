@@ -10,12 +10,13 @@ export class Engagement {
   this.recent=[...(state.recent||[]),game.words[game.index].en].slice(-10);this.reviewQueue=[];this.reviewBatchAt=state.reviewBatchAt||0;this.isReview=false;
   this.stage=state.stage&&Number.isFinite(state.stage.remainingMs)?structuredClone(state.stage):{number:1,remainingMs:10*MINUTE,scores:{}};
   this.completed=state.completed||[];this.activeTopic=state.activeTopic||'mixed';this.scoreMode=state.scoreMode||'auto';this.votes=new Map(state.votes||[]);this.lastClock=game.now();this.lastCommand=new Map();this.noticeQueue=[];this.notice=null;
+  this.classSeats=(state.classSeats||[]).slice(0,3);this.classHonor=null;
  }
  tick(active){const now=this.game.now(),delta=Math.max(0,now-this.lastClock);this.lastClock=now;if(active)this.stage.remainingMs=Math.max(0,this.stage.remainingMs-delta);if(this.notice&&this.notice.expiresAt<=now)this.notice=null;if(!this.notice&&this.noticeQueue.length)this.notice={...this.noticeQueue.shift(),expiresAt:now+5000};}
  notify(title,name,detail,id){const n={id:id||`${this.game.now()}:${this.noticeQueue.length}`,title,name,detail};if(!this.notice)this.notice={...n,expiresAt:this.game.now()+5000};else{this.noticeQueue.push(n);this.noticeQueue=this.noticeQueue.slice(-20);}}
  leaders(stage=this.stage){return Object.entries(stage.scores).map(([id,p])=>({id,...p})).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name));}
  beforeNext(){
-  if(this.stage.remainingMs===0){const leaders=this.leaders();this.completed.push({...structuredClone(this.stage),leaders});this.completed=this.completed.slice(-6);if(leaders[0])this.notify('🏆 VÔ ĐỊCH CHẶNG '+this.stage.number,leaders[0].name,leaders[0].score+' điểm · Chặng mới ai cũng có cơ hội!');this.stage={number:this.stage.number+1,remainingMs:10*MINUTE,scores:{}};}
+  if(this.stage.remainingMs===0){const leaders=this.leaders();this.completed.push({...structuredClone(this.stage),leaders});this.completed=this.completed.slice(-6);if(leaders[0])this.notify('🏆 VÔ ĐỊCH CHẶNG '+this.stage.number,leaders[0].name,leaders[0].score+' điểm · Chặng mới ai cũng có cơ hội!');this.stage={number:this.stage.number+1,remainingMs:10*MINUTE,scores:{}};this.classSeats=[];this.classHonor=null;}
   if(!this.isReview&&this.normalCount%30===0){const counts=TOPICS.map(t=>({id:t.id,n:[...this.votes.values()].filter(v=>v===t.id).length}));const max=Math.max(...counts.map(c=>c.n));if(max>0)this.activeTopic=counts.find(c=>c.n===max).id;this.votes.clear();}
   this.roundNumber++;
   if(this.reviewQueue.length){this.isReview=true;return this.reviewQueue.shift();}
@@ -30,6 +31,16 @@ export class Engagement {
   const badges=new Set(player.badges||[]),rank=[...this.game.players.values()].filter(p=>p.score>player.score).length+1;
   for(const [id,ok,title]of [['first',player.wins>=1,'Đáp án đúng đầu tiên'],['three',player.wins>=3,'Đã nhớ 3 từ'],['hundred',player.score>=100,'Cột mốc 100 điểm'],['top10',rank<=10&&player.score>0,'Lần đầu vào top 10']])if(ok&&!badges.has(id)){badges.add(id);this.notify('🎯 HOÀN THÀNH THỬ THÁCH',player.name,title,`${player.id}:${id}`);}
   player.badges=[...badges];
+  this.recordClassSeat(player,points,window);
+ }
+ recordClassSeat(player,points,window){
+  if(window.stage!==this.stage.number||points<=0)return;
+  const previous=this.classSeats[0],candidate=this.classSeats.find(p=>p.id===player.id);
+  if(candidate){candidate.name=player.name;if(points>candidate.points){candidate.points=points;candidate.round=window.round;}}
+  else this.classSeats.push({id:player.id,name:player.name,points,round:window.round});
+  // Stable ties keep the incumbent ahead. One person can hold only one seat.
+  this.classSeats.sort((a,b)=>b.points-a.points);this.classSeats=this.classSeats.slice(0,3);
+  const leader=this.classSeats[0];if(leader&&leader.id!==previous?.id)this.classHonor={id:`class:${this.stage.number}:${window.round}:${leader.id}`,title:'🏆 LỚP TRƯỞNG MỚI',name:leader.name,detail:leader.points+' điểm trong 1 vòng'+(previous?' · '+previous.name+' xuống Lớp phó':''),expiresAt:this.game.now()+5000};
  }
  command(chat){
   const text=chat.text.normalize('NFKC').trim().toLowerCase();if(!/^!(?:diem|điểm|chuoi|chuỗi|vote)(?:\s|$)/.test(text))return null;
@@ -41,8 +52,8 @@ export class Engagement {
  }
  snapshot(){
   const g=this.game,seconds=Math.ceil(this.stage.remainingMs/1000),rescue=[...g.players.values()].map(p=>({...p,streak:g.currentStreak(p)})).filter(p=>p.streak%3===2).sort((a,b)=>b.streak-a.streak)[0];
-  const topic=TOPICS.find(t=>t.id===this.activeTopic),actualTopic=topic?.words.includes(g.word.en)||this.isReview?topic:null;return {topicVoteIn:this.normalCount%30===0&&!this.isReview?0:30-this.normalCount%30,version:'2026-11-04-retention-1',scoreMode:this.scoreMode,roundNumber:this.roundNumber,multiplier:this.multiplier,isReview:this.isReview,stage:{number:this.stage.number,seconds,leaders:this.leaders().slice(0,10),previous:this.completed.at(-1)?{number:this.completed.at(-1).number,winner:this.leaders(this.completed.at(-1))[0]||null}:null},topics:TOPICS.map(t=>({id:t.id,label:t.label,code:t.code,votes:[...this.votes.values()].filter(id=>id===t.id).length})),topic:actualTopic?.label||'Tổng hợp',nextBonusIn:(5-this.roundNumber%5)%5||5,rescue:rescue?{name:rescue.name,streak:rescue.streak,target:rescue.streak+1}:null,notice:this.notice,mission:'Đúng 3 từ · Ghi 100 điểm · Lọt top 10',reviewIn:10-this.normalCount%10};
+  const topic=TOPICS.find(t=>t.id===this.activeTopic),actualTopic=topic?.words.includes(g.word.en)||this.isReview?topic:null;return {classSeats:this.classSeats.map((p,i)=>({...p,role:['Lớp trưởng','Lớp phó','Tổ trưởng'][i]})),classHonor:this.classHonor?.expiresAt>this.game.now()?this.classHonor:null,topicVoteIn:this.normalCount%30===0&&!this.isReview?0:30-this.normalCount%30,version:'2026-11-06-class-seats-1',scoreMode:this.scoreMode,roundNumber:this.roundNumber,multiplier:this.multiplier,isReview:this.isReview,stage:{number:this.stage.number,seconds,leaders:this.leaders().slice(0,10),previous:this.completed.at(-1)?{number:this.completed.at(-1).number,winner:this.leaders(this.completed.at(-1))[0]||null}:null},topics:TOPICS.map(t=>({id:t.id,label:t.label,code:t.code,votes:[...this.votes.values()].filter(id=>id===t.id).length})),topic:actualTopic?.label||'Tổng hợp',nextBonusIn:(5-this.roundNumber%5)%5||5,rescue:rescue?{name:rescue.name,streak:rescue.streak,target:rescue.streak+1}:null,notice:this.notice,mission:'Đúng 3 từ · Ghi 100 điểm · Lọt top 10',reviewIn:10-this.normalCount%10};
  }
- reset(){this.stage={number:this.stage.number+1,remainingMs:10*MINUTE,scores:{}};this.completed=[];this.notice=null;this.noticeQueue=[];this.votes.clear();}
- export(){return {votes:[...this.votes],version:'2026-11-04-retention-1',scoreMode:this.scoreMode,roundNumber:this.roundNumber,normalCount:this.normalCount,recent:this.recent,reviewBatchAt:this.reviewBatchAt,stage:this.stage,completed:this.completed,activeTopic:this.activeTopic};}
+ reset(){this.stage={number:this.stage.number+1,remainingMs:10*MINUTE,scores:{}};this.completed=[];this.notice=null;this.noticeQueue=[];this.votes.clear();this.classSeats=[];this.classHonor=null;}
+ export(){return {classSeats:this.classSeats,votes:[...this.votes],version:'2026-11-06-class-seats-1',scoreMode:this.scoreMode,roundNumber:this.roundNumber,normalCount:this.normalCount,recent:this.recent,reviewBatchAt:this.reviewBatchAt,stage:this.stage,completed:this.completed,activeTopic:this.activeTopic};}
 }

@@ -137,3 +137,10 @@ Chạy `node tools/build-vercel.mjs` trước khi đẩy mã; công cụ tự g�
 ### Âm thanh trực tiếp từ overlay (06/11/2026)
 
 Thiết lập nằm trong audioSettings của data/live-scores.json và được phát cùng trạng thái game. POST /api/audio chỉ có trên máy điều khiển; relay công khai vẫn chặn mọi lệnh POST. MP3 MC được đọc qua cue-99.mp3 với nội dung giới hạn bởi vòng hiện tại và các lời dẫn cố định; không đọc văn bản tùy ý hoặc bình luận. Vercel có bộ chuyển tiếp MP3 cùng nguồn, không cần mở bảng điều khiển để lấy tiếng. Trong cùng trình duyệt/profile, các overlay chia quyền phát qua BroadcastChannel; giữa hai trình duyệt/profile khác nhau vẫn cần chỉ giữ một nguồn có tiếng. Chính sách tự phát phụ thuộc trình duyệt/Studio, không thể bỏ qua bằng mã trang web.
+
+
+## Ba ghế cán bộ lớp
+
+Overlay có ba ghế cố định: Lớp trưởng, Lớp phó, Tổ trưởng, theo ba người có điểm cao nhất của một vòng trong chặng đang chơi (không phải tổng điểm). Mỗi người giữ tối đa một ghế, chỉ lấy thành tích vòng tốt nhất của người đó. Điểm bằng nhau giữ thứ tự người đang giữ ghế; vòng x2 dùng điểm thực đã nhân đôi. Người vượt kỷ lục lớp trưởng sẽ lên ghế, lớp trưởng cũ xuống lớp phó và người sau lùi một vị trí. Có thông báo LỚP TRƯỞNG MỚI trong 5 giây. Sang chặng mới hoặc đặt lại điểm thì ghế trống lại; khởi động lại giữ ghế của chặng hiện tại. Điểm trễ thuộc chặng trước không giành ghế chặng mới.
+
+Ba ghế nằm trong khu tương tác phía trên bảng xếp hạng; dòng bình luận mới nhất nằm ngay dưới để giữ bố cục 9:16.
