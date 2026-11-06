@@ -144,3 +144,7 @@ Thiết lập nằm trong audioSettings của data/live-scores.json và được
 Overlay có ba ghế cố định: Lớp trưởng, Lớp phó, Tổ trưởng, theo ba người có điểm cao nhất của một vòng trong chặng đang chơi (không phải tổng điểm). Mỗi người giữ tối đa một ghế, chỉ lấy thành tích vòng tốt nhất của người đó. Điểm bằng nhau giữ thứ tự người đang giữ ghế; vòng x2 dùng điểm thực đã nhân đôi. Người vượt kỷ lục lớp trưởng sẽ lên ghế, lớp trưởng cũ xuống lớp phó và người sau lùi một vị trí. Có thông báo LỚP TRƯỞNG MỚI trong 5 giây. Sang chặng mới hoặc đặt lại điểm thì ghế trống lại; khởi động lại giữ ghế của chặng hiện tại. Điểm trễ thuộc chặng trước không giành ghế chặng mới.
 
 Ba ghế nằm trong khu tương tác phía trên bảng xếp hạng; dòng bình luận mới nhất nằm ngay dưới để giữ bố cục 9:16.
+
+## Tự nối lại TikTok LIVE
+
+Máy chủ tự kết nối @_hln110 khi khởi động. Mất kết nối sẽ thử lại sau 5, 10, 20 rồi tối đa 30 giây; tài khoản chưa LIVE thì kiểm tra lại mỗi 30 giây. Có giới hạn chờ kết nối và kiểm tra socket mỗi 5 giây. Cảnh báo phụ từ thư viện không khóa chat khi socket vẫn hoạt động. Không tạo nhiều kết nối khi bấm nút liên tục. Bấm Dùng demo mới tắt tự nối, lựa chọn này và tài khoản được lưu khi khởi động lại. Điểm và lịch sử từ được giữ. Vẫn cần máy chủ trên máy tính chạy và có Internet; TikTok có thể giới hạn hoặc từ chối thư viện kết nối không chính thức.

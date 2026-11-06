@@ -6,6 +6,7 @@ import {Game} from './game.mjs';
 import {DEFAULT_AUDIO,updateAudio} from './audio-config.mjs';
 import {synthesizeVoice} from './voice-cache.mjs';
 import {parseTikTokChat} from './tiktok-chat.mjs';
+import {LiveConnection} from './live-connection.mjs';
 import {openWordDeck} from './word-deck-store.mjs';
 import {fileURLToPath} from 'node:url';
 const words=JSON.parse(await readFile(new URL('./words.json',import.meta.url),'utf8'));
@@ -13,32 +14,23 @@ const deck=openWordDeck(words,fileURLToPath(new URL('./data/word-progress.json',
 const scoreFile=new URL('./data/live-scores.json',import.meta.url);
 let saved={};try{saved=JSON.parse(readFileSync(scoreFile,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
 let audioSettings={...DEFAULT_AUDIO,...saved.audioSettings,owner:'overlay'};
+let liveSettings={username:'_hln110',enabled:true,...saved.liveSettings};
 const game=new Game(words,()=>Date.now(),Math.random,{deck,sequence:saved.sequence,engagementState:saved.engagement}), clients=new Set();
 game.demo=false;game.start();game.pause();
 for(const p of saved.players||[])if(typeof p.id==='string'&&typeof p.name==='string'&&Number.isFinite(p.score)&&p.score>=0)game.players.set(p.id,p);
 game.comments=(saved.comments||[]).slice(0,30);game.seen=new Set(saved.seen||game.comments.map(c=>c.id));
-function saveScores(){const temp=new URL('./data/live-scores.tmp',import.meta.url);writeFileSync(temp,JSON.stringify({audioSettings,players:[...game.players.values()],comments:game.comments,seen:[...game.seen],sequence:game.sequence,engagement:game.engagement?.export()}));renameSync(temp,scoreFile);}
-let live={status:'demo',message:'Bình luận demo · chưa kết nối LIVE'}, connection, connecting=false;
+function saveScores(){const temp=new URL('./data/live-scores.tmp',import.meta.url);writeFileSync(temp,JSON.stringify({liveSettings,audioSettings,players:[...game.players.values()],comments:game.comments,seen:[...game.seen],sequence:game.sequence,engagement:game.engagement?.export()}));renameSync(temp,scoreFile);}
+let live={status:liveSettings.enabled?'waiting':'demo',username:liveSettings.username,autoReconnect:liveSettings.enabled,message:'Đang chuẩn bị kết nối LIVE…'};
 let clientVersion='';async function readClientVersion(){try{clientVersion=(await readFile(new URL('./public/app.js',import.meta.url),'utf8')).match(/^const CLIENT_VERSION='([^']+)'/m)?.[1]||'';}catch{}}
 await readClientVersion();setInterval(readClientVersion,2000).unref();
 const send=()=>{const data=`data: ${JSON.stringify({...game.snapshot(),live,clientVersion,audio:audioSettings})}\n\n`;for(const c of clients)c.write(data);};
 const result=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data));};
-async function connect(username){
- if(connecting)throw Error('Đang kết nối, vui lòng chờ.');
- connecting=true;game.demo=false;
- try {
-  if(connection){connection.removeAllListeners();connection.disconnect();connection=null;}
-  live={status:'connecting',message:`Đang kết nối @${username}…`};send();
-  const mod=await import('tiktok-live-connector');
-  const Constructor=mod.TikTokLiveConnection||mod.WebcastPushConnection;
-  if(!Constructor)throw Error('Phiên bản connector không tương thích.');
-  const candidate=new Constructor(username,{processInitialData:false,...(process.env.TIKTOK_SIGN_API_KEY?{signApiKey:process.env.TIKTOK_SIGN_API_KEY}:{})});connection=candidate;
-  candidate.on('chat',d=>{if(live.status!=='connected')return;const chat=parseTikTokChat(d,randomUUID);if(!chat)return;const points=game.comment(chat);if(points!==false){appendFileSync(new URL('./data/live-comments.jsonl',import.meta.url),JSON.stringify({...chat,points,receivedAt:Date.now()})+'\n');saveScores();}send();});
-  candidate.on('error',()=>{live={status:'error',message:'Lỗi kết nối TikTok. Kiểm tra mạng, tài khoản đang LIVE và thử lại.'};send();});
-  candidate.on('disconnected',()=>{live={status:'offline',message:'Đã mất kết nối LIVE. Bấm kết nối lại khi sẵn sàng.'};send();});
-  await candidate.connect();live={status:'connected',message:`Đang nhận bình luận @${username}`};
- }catch(e){if(connection){connection.removeAllListeners();connection.disconnect();connection=null;}live={status:'error',message:e.code==='ERR_MODULE_NOT_FOUND'?'Chưa cài connector. Xem README để bật tích hợp thử nghiệm.':'Không kết nối được. Kiểm tra người dùng đang LIVE và hướng dẫn README.'};throw Error(live.message);}finally{connecting=false;send();}
-}
+const liveManager=new LiveConnection({settings:liveSettings,
+ createConnection:async username=>{const mod=await import('tiktok-live-connector');const Constructor=mod.TikTokLiveConnection||mod.WebcastPushConnection;if(!Constructor)throw Error('Connector không tương thích.');return new Constructor(username,{processInitialData:false,...(process.env.TIKTOK_SIGN_API_KEY?{signApiKey:process.env.TIKTOK_SIGN_API_KEY}:{})});},
+ onChange:state=>{live=state;if(state.autoReconnect)game.demo=false;send();},
+ onSettings:settings=>{liveSettings=settings;saveScores();},
+ onChat:data=>{const chat=parseTikTokChat(data,randomUUID);if(!chat)return;const points=game.comment(chat);if(points!==false){appendFileSync(new URL('./data/live-comments.jsonl',import.meta.url),JSON.stringify({...chat,points,receivedAt:Date.now()})+'\n');saveScores();}send();}
+});
 const server=http.createServer(async(req,res)=>{
  try {
  const url=new URL(req.url,'http://localhost');
@@ -55,18 +47,18 @@ const server=http.createServer(async(req,res)=>{
   if(req.headers['sec-fetch-site']==='cross-site')return result(res,403,{error:'Yêu cầu ngoài ứng dụng bị chặn.'});
   let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>8192)return result(res,413,{error:'Dữ liệu quá dài.'});}const body=JSON.parse(raw||'{}');
   if(url.pathname==='/api/comment'){
-   if(live.status==='connected'||live.status==='connecting')throw Error('Ngắt LIVE trước khi thử bình luận demo.');
+   if(liveSettings.enabled)throw Error('Bấm Dùng demo trước khi thử bình luận mẫu.');
    const name=String(body.name||'').trim().slice(0,40),text=String(body.text||'').trim().slice(0,180);if(!name||!text)throw Error('Nhập tên và câu trả lời.');
    game.comment({id:randomUUID(),userId:`demo:${name.toLowerCase()}`,name,text});
   }else if(url.pathname==='/api/control'){
    if(body.action==='start')game.start();else if(body.action==='pause')game.pause();else if(body.action==='next')game.next();else if(body.action==='reveal')game.reveal();else if(body.action==='reset')game.reset();
    else if(body.action==='duration'){const n=Number(body.value);if(![20,30,45].includes(n))throw Error('Thời gian không hợp lệ.');game.setDuration(n);}
-   else if(body.action==='bots'){if(live.status==='connected'||connecting)throw Error('Ngắt LIVE trước khi bật bot.');game.demo=Boolean(body.value);}
+   else if(body.action==='bots'){if(liveSettings.enabled)throw Error('Bấm Dùng demo trước khi bật bot.');game.demo=Boolean(body.value);}
    else if(body.action==='scoreMode'){if(!['auto','total','stage'].includes(body.value))throw Error('Kiểu bảng điểm không hợp lệ.');game.engagement.scoreMode=body.value;}
    else throw Error('Lệnh không hợp lệ.');saveScores();
   }else if(url.pathname==='/api/audio'){audioSettings=updateAudio(audioSettings,body);saveScores();}
-  else if(url.pathname==='/api/connect'){const name=String(body.username||'').replace(/^@/,'');if(!/^[a-zA-Z0-9_.]{2,30}$/.test(name))throw Error('Nhập username TikTok hợp lệ.');await connect(name);}
-  else if(url.pathname==='/api/disconnect'){if(connecting)throw Error('Chờ kết nối hoàn tất rồi ngắt.');if(connection){connection.removeAllListeners();connection.disconnect();connection=null;}live={status:'demo',message:'Bình luận demo · chưa kết nối LIVE'};game.demo=true;}
+  else if(url.pathname==='/api/connect'){const name=String(body.username||'').replace(/^@/,'');if(!/^[a-zA-Z0-9_.]{2,30}$/.test(name))throw Error('Nhập username TikTok hợp lệ.');game.demo=false;await liveManager.enable(name);}
+  else if(url.pathname==='/api/disconnect'){liveManager.disable();game.demo=true;}
   else return result(res,404,{error:'Không tìm thấy.'});send();return result(res,200,{ok:true});
  }
  const files={'/':'index.html','/overlay':'index.html','/audio.mjs':'audio.mjs','/music/edm-detection-mode.mp3':'music/edm-detection-mode.mp3','/app.js':'app.js','/style.css':'style.css'};
@@ -79,4 +71,4 @@ const server=http.createServer(async(req,res)=>{
 });
 setInterval(send,100).unref();
 setInterval(saveScores,5000).unref();
-server.listen(3210,'127.0.0.1',()=>console.log('WordLive: http://127.0.0.1:3210 | Màn hình phát: http://127.0.0.1:3210/overlay'));
+server.listen(3210,'127.0.0.1',()=>{console.log('WordLive: http://127.0.0.1:3210 | Màn hình phát: http://127.0.0.1:3210/overlay');liveManager.start();});

@@ -1,4 +1,4 @@
-const CLIENT_VERSION='7b16e6d8b7b8db0a';
+const CLIENT_VERSION='4a50a82860c4d398';
 import {LiveAudio} from '/audio.mjs';
 const $=id=>document.getElementById(id), stage=$('stage');
 const overlay=location.pathname==='/overlay';if(overlay)document.body.classList.add('overlay');
@@ -51,7 +51,7 @@ function render(s){
  row.style.transform=`translateY(${i*30}px)`;row.style.opacity=i<4?'1':'0';row.setAttribute('aria-hidden',String(i>=4));row.classList.toggle('first',i===0&&p.score>0);row.children[1].textContent=p.name;
  if(Number(row.dataset.score)!==p.score){const point=row.children[2];point.textContent=p.score+' đ';point.classList.remove('bump');void point.offsetWidth;point.classList.add('bump');row.dataset.score=p.score;}
  });for(const [id,r] of rows)if(!present.has(id)){r.remove();rows.delete(id);}
- $('connection').textContent=s.live.message;$('bots').checked=s.demo;const active=['connecting','connected'].includes(s.live.status);$('bots').disabled=active;$('who').disabled=active;$('ans').disabled=active;$('send').disabled=active;$('connect').disabled=s.live.status==='connecting';
+ $('connection').textContent=s.live.message;if(s.live.username&&document.activeElement!==$('username'))$('username').value=s.live.username;$('bots').checked=s.demo;const active=s.live.autoReconnect||['connecting','connected'].includes(s.live.status);$('bots').disabled=active;$('who').disabled=active;$('ans').disabled=active;$('send').disabled=active;$('connect').disabled=s.live.status==='connecting';
  sound.update(s);
  if(s.deck){$('deck-counter').textContent=`Lượt ${s.deck.cycle} · Đã hiện ${s.deck.shown}/${s.deck.total} từ`;$('deck-summary').textContent=`Lượt ${s.deck.cycle}: đã hiện ${s.deck.shown}/${s.deck.total}, còn ${s.deck.remaining} từ chưa hiện. Lịch sử giữ qua lần mở app.`;}
  $('vi').style.fontSize=s.vi.length>25?'27px':s.vi.length>16?'34px':'';
