@@ -1,4 +1,4 @@
-const CLIENT_VERSION='4d10d8c49e054490';
+const CLIENT_VERSION='7b16e6d8b7b8db0a';
 import {LiveAudio} from '/audio.mjs';
 const $=id=>document.getElementById(id), stage=$('stage');
 const overlay=location.pathname==='/overlay';if(overlay)document.body.classList.add('overlay');
