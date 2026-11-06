@@ -1,4 +1,4 @@
-const CLIENT_VERSION='cb15fd6a40081407';
+const CLIENT_VERSION='7cfc0771007cf267';
 import {LiveAudio} from '/audio.mjs';
 const $=id=>document.getElementById(id), stage=$('stage');
 const overlay=location.pathname==='/overlay';if(overlay)document.body.classList.add('overlay');
@@ -73,7 +73,7 @@ const events=new EventSource('/events');events.onmessage=e=>render(JSON.parse(e.
 $('go').onclick=()=>api('control',{action:state?.phase==='playing'?'pause':'start'});$('rev').onclick=()=>api('control',{action:'reveal'});$('next').onclick=()=>api('control',{action:'next'});$('dur').onchange=e=>api('control',{action:'duration',value:e.target.value});$('reset').onclick=()=>{if(confirm('Xóa điểm và sang từ chưa xuất hiện tiếp theo? Lịch sử từ vẫn được giữ.'))api('control',{action:'reset'});};
 async function mine(){const text=$('ans').value.trim();if(!text)return;if(await api('comment',{name:$('who').value.trim()||'Khách',text})){$('ans').value='';$('ans').focus();}}$('send').onclick=mine;$('ans').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();mine();}};
 $('bots').onchange=e=>api('control',{action:'bots',value:e.target.checked});$('connect').onclick=()=>api('connect',{username:$('username').value});$('disconnect').onclick=()=>api('disconnect',{});
-if(!('speechSynthesis' in window))$('tts').disabled=true;
+
 $('export').onclick=async()=>{try{const r=await fetch('/api/scores');if(!r.ok)throw Error('Không tải được điểm.');const scores=await r.json();const cell=v=>'"'+String(v).replace(/^\s*[=+@-]/,"'$&").replaceAll('"','""')+'"';const csv='\uFEFF'+[['Tên','Điểm','Số vòng đúng'],...scores.map(p=>[p.name,p.score,p.wins])].map(r=>r.map(cell).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=el('a','');a.href=url;a.download='wordlive-diem.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(e){$('notice').textContent=e.message;}};
 
 $('word-history').onclick=async()=>{try{const r=await fetch('/api/word-history');if(!r.ok)throw Error('Lịch sử chỉ xuất được trên bàn điều khiển của máy phát.');const d=await r.json();const cell=v=>'\"'+String(v).replace(/^[=+@-]/,"'$&").replaceAll('\"','\"\"')+'\"';const csv='\uFEFF'+[['STT','Lượt','Từ tiếng Anh','Nghĩa','Thời điểm hiển thị'],...d.history.map(e=>[e.sequence,e.cycle,e.word,e.vi,e.displayedAt])].map(row=>row.map(cell).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=el('a','');a.href=url;a.download='wordlive-lich-su-tu.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(e){$('notice').textContent=e.message;}};

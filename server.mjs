@@ -3,6 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {readFileSync,writeFileSync,renameSync,appendFileSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
 import {Game} from './game.mjs';
+import {DEFAULT_AUDIO,updateAudio} from './audio-config.mjs';
 import {synthesizeVoice} from './voice-cache.mjs';
 import {parseTikTokChat} from './tiktok-chat.mjs';
 import {openWordDeck} from './word-deck-store.mjs';
@@ -11,15 +12,16 @@ const words=JSON.parse(await readFile(new URL('./words.json',import.meta.url),'u
 const deck=openWordDeck(words,fileURLToPath(new URL('./data/word-progress.json',import.meta.url)));
 const scoreFile=new URL('./data/live-scores.json',import.meta.url);
 let saved={};try{saved=JSON.parse(readFileSync(scoreFile,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
+let audioSettings={...DEFAULT_AUDIO,...saved.audioSettings,owner:'overlay'};
 const game=new Game(words,()=>Date.now(),Math.random,{deck,sequence:saved.sequence,engagementState:saved.engagement}), clients=new Set();
 game.demo=false;game.start();game.pause();
 for(const p of saved.players||[])if(typeof p.id==='string'&&typeof p.name==='string'&&Number.isFinite(p.score)&&p.score>=0)game.players.set(p.id,p);
 game.comments=(saved.comments||[]).slice(0,30);game.seen=new Set(saved.seen||game.comments.map(c=>c.id));
-function saveScores(){const temp=new URL('./data/live-scores.tmp',import.meta.url);writeFileSync(temp,JSON.stringify({players:[...game.players.values()],comments:game.comments,seen:[...game.seen],sequence:game.sequence,engagement:game.engagement?.export()}));renameSync(temp,scoreFile);}
+function saveScores(){const temp=new URL('./data/live-scores.tmp',import.meta.url);writeFileSync(temp,JSON.stringify({audioSettings,players:[...game.players.values()],comments:game.comments,seen:[...game.seen],sequence:game.sequence,engagement:game.engagement?.export()}));renameSync(temp,scoreFile);}
 let live={status:'demo',message:'Bình luận demo · chưa kết nối LIVE'}, connection, connecting=false;
 let clientVersion='';async function readClientVersion(){try{clientVersion=(await readFile(new URL('./public/app.js',import.meta.url),'utf8')).match(/^const CLIENT_VERSION='([^']+)'/m)?.[1]||'';}catch{}}
 await readClientVersion();setInterval(readClientVersion,2000).unref();
-const send=()=>{const data=`data: ${JSON.stringify({...game.snapshot(),live,clientVersion})}\n\n`;for(const c of clients)c.write(data);};
+const send=()=>{const data=`data: ${JSON.stringify({...game.snapshot(),live,clientVersion,audio:audioSettings})}\n\n`;for(const c of clients)c.write(data);};
 const result=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data));};
 async function connect(username){
  if(connecting)throw Error('Đang kết nối, vui lòng chờ.');
@@ -41,8 +43,9 @@ const server=http.createServer(async(req,res)=>{
  try {
  const url=new URL(req.url,'http://localhost');
  if(req.method==='GET'&&url.pathname==='/events'){res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-cache','Connection':'keep-alive'});clients.add(res);send();req.on('close',()=>clients.delete(res));return;}
- if(req.method==='GET'&&url.pathname==='/api/voice'){const bytes=await synthesizeVoice(url.searchParams.get('text')||'',url.searchParams.get('lang')||'',game.word);res.writeHead(200,{'Content-Type':'audio/mpeg','Content-Length':bytes.length,'Cache-Control':'private, max-age=86400'});res.end(bytes);return;}
- if(req.method==='GET'&&url.pathname==='/api/state')return result(res,200,{...game.snapshot(),live,clientVersion});
+ // cue-99 is the generated public MC cue. Its text is still restricted to the current round.
+ if(req.method==='GET'&&['/api/voice','/voice/cue-99.mp3'].includes(url.pathname)){const bytes=await synthesizeVoice(url.searchParams.get('text')||'',url.searchParams.get('lang')||'',game.word);res.writeHead(200,{'Content-Type':'audio/mpeg','Content-Length':bytes.length,'Cache-Control':'private, max-age=86400'});res.end(bytes);return;}
+ if(req.method==='GET'&&url.pathname==='/api/state')return result(res,200,{...game.snapshot(),live,clientVersion,audio:audioSettings});
  if(req.method==='GET'&&url.pathname==='/api/word-history')return result(res,200,{progress:deck.progress(),history:deck.history()});
  if(req.method==='GET'&&url.pathname==='/api/scores')return result(res,200,[...game.players.values()].sort((a,b)=>b.score-a.score));
  if(req.method==='POST'&&url.pathname.startsWith('/api/')){
@@ -61,7 +64,8 @@ const server=http.createServer(async(req,res)=>{
    else if(body.action==='bots'){if(live.status==='connected'||connecting)throw Error('Ngắt LIVE trước khi bật bot.');game.demo=Boolean(body.value);}
    else if(body.action==='scoreMode'){if(!['auto','total','stage'].includes(body.value))throw Error('Kiểu bảng điểm không hợp lệ.');game.engagement.scoreMode=body.value;}
    else throw Error('Lệnh không hợp lệ.');saveScores();
-  }else if(url.pathname==='/api/connect'){const name=String(body.username||'').replace(/^@/,'');if(!/^[a-zA-Z0-9_.]{2,30}$/.test(name))throw Error('Nhập username TikTok hợp lệ.');await connect(name);}
+  }else if(url.pathname==='/api/audio'){audioSettings=updateAudio(audioSettings,body);saveScores();}
+  else if(url.pathname==='/api/connect'){const name=String(body.username||'').replace(/^@/,'');if(!/^[a-zA-Z0-9_.]{2,30}$/.test(name))throw Error('Nhập username TikTok hợp lệ.');await connect(name);}
   else if(url.pathname==='/api/disconnect'){if(connecting)throw Error('Chờ kết nối hoàn tất rồi ngắt.');if(connection){connection.removeAllListeners();connection.disconnect();connection=null;}live={status:'demo',message:'Bình luận demo · chưa kết nối LIVE'};game.demo=true;}
   else return result(res,404,{error:'Không tìm thấy.'});send();return result(res,200,{ok:true});
  }

@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {DEFAULT_AUDIO,updateAudio}from './audio-config.mjs';
+test('Âm thanh thuộc overlay, thay thiết lập không xóa các giá trị còn lại',()=>{const next=updateAudio(DEFAULT_AUDIO,{musicVolume:12,ttsOn:false});assert.equal(next.owner,'overlay');assert.equal(next.enabled,true);assert.equal(next.voiceVolume,90);assert.equal(next.musicVolume,12);assert.equal(DEFAULT_AUDIO.musicVolume,20);assert.equal(updateAudio(next,{test:true},123).testNonce,123);});
+test('Không nhận âm lượng sai hoặc thiết lập tùy ý từ người gọi',()=>{for(const patch of [{musicVolume:101},{voiceVolume:-1},{enabled:'yes'},{owner:'control'},{offset:-1},{test:false},[]])assert.throws(()=>updateAudio(DEFAULT_AUDIO,patch));});

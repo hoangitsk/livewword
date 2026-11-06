@@ -1,1 +1,23 @@
-{"$schema":"https://openapi.vercel.sh/vercel.json","framework":null,"buildCommand":"node tools/build-vercel.mjs","outputDirectory":"dist","redirects":[{"source":"/","destination":"/overlay","permanent":false}],"rewrites":[{"source":"/overlay","destination":"/index.html"}]}
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "node tools/build-vercel.mjs",
+  "outputDirectory": "dist",
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/overlay",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/voice/cue-99.mp3",
+      "destination": "/api/voice"
+    },
+    {
+      "source": "/overlay",
+      "destination": "/index.html"
+    }
+  ]
+}

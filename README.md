@@ -44,7 +44,7 @@ Khóa không được đưa xuống trình duyệt. Dịch vụ ký có thể c�
 
 ## Lời dẫn và mã nguồn
 
-Bản âm thanh mới có MC Google lưu sẵn trong public/voice; xem mục Nhạc nền & MC tự động bên dưới. Có thể chọn thêm giọng trình duyệt nếu máy hỗ trợ.
+Bản âm thanh mới có MC Google lưu sẵn trong public/voice; xem mục Nhạc nền & MC tự động bên dưới. Nguồn LIVE ưu tiên MP3 giọng Google được tạo và lưu trên máy chủ game.
 
 Font Bricolage Grotesque được tải từ Google Fonts; không có mạng thì dùng font hệ thống.
 
@@ -67,11 +67,11 @@ Bản giao diện trước nằm trong Tai-lieu/truoc-thiet-ke-cobalt-*.
 
 ## Nhạc nền & MC tự động (bản mới)
 
-Mở START.cmd, vào trang chính và bấm **Bật âm thanh**. Trình duyệt yêu cầu thao tác này trước khi phát. Chọn giọng mặc định **Google tiếng Việt · tự tạo và lưu giọng**. Nút Nghe thử MC phát đoạn chào. Nhạc và MC không tự phát từ overlay; chỉ bật tiếng ở một cửa sổ điều khiển và thu âm cửa sổ/âm thanh hệ thống đó trong OBS hoặc LIVE Studio. Hãy thu thử một đoạn để kiểm tra cả nhạc lẫn tiếng nói đã vào luồng. Không chỉ thu nguồn overlay nếu âm thanh nằm ở cửa sổ điều khiển.
+Mở START.cmd, đặt nguồn Link của LIVE Studio vào /overlay và bật **Turn on sound**. Nhạc, MC và âm báo phát trực tiếp trong nguồn overlay. Bảng điều khiển chỉ gửi bật/tắt, âm lượng và lệnh nghe thử; đóng bảng điều khiển không tắt tiếng. Nếu trình duyệt chặn tự phát, overlay hiện nút **Chạm để bật tiếng LIVE**. Cần kiểm tra thanh âm lượng nguồn Link trong Studio và thu thử để xác nhận tiếng vào luồng.
 
 Nhạc mặc định: **EDM Detection Mode — Kevin MacLeod**, tải từ website tác giả. YouTube chính thức: https://www.youtube.com/watch?v=laHl-aFZUJI . Nhịp 128 BPM, mặc định phát/lặp giây **120–210**, chỉnh hai ô để chọn đoạn bạn thích. Giá trị kết thúc 0 nghĩa là phát đến hết bài rồi quay lại điểm bắt đầu. Nhạc không khởi động lại ở mỗi vòng chơi. Tệp MP3 gốc không bị sửa; app chỉ chọn đoạn khi phát.
 
-Bài có giấy phép **CC BY 4.0**, miễn phí có điều kiện ghi nguồn; không phải public domain và không cam kết tránh mọi nhận diện tự động. Xem MUSIC-LICENSE.txt; bấm **Chép ghi nguồn cho LIVE**, dán vào mô tả LIVE/video và giữ dòng ghi nguồn trên hình. Lưu lại nguồn/giấy phép khi dùng. Dòng ghi nguồn nhạc riêng đồng bộ sang overlay trong cùng trình duyệt/profile.
+Bài có giấy phép **CC BY 4.0**, miễn phí có điều kiện ghi nguồn; không phải public domain và không cam kết tránh mọi nhận diện tự động. Xem MUSIC-LICENSE.txt; bấm **Chép ghi nguồn cho LIVE**, dán vào mô tả LIVE/video và giữ dòng ghi nguồn trên hình. Lưu lại nguồn/giấy phép khi dùng. Nguồn LIVE hiện dùng bài mặc định; chọn tệp nhạc riêng trên bảng điều khiển chưa gửi tệp đó sang overlay.
 
 Bạn thích nhạc quẩy cũ/drop kiểu “2 Phút Hơn” hoặc “Tuổi Trẻ Tương Lai”: app có chỗ chọn MP3/WAV riêng và chọn đoạn cao trào, nhưng **không cài sẵn các bản remix này khi chưa có quyền sử dụng**. Bài cũ hoặc được đăng YouTube không tự có nghĩa miễn bản quyền. Với mỗi bản ghi/remix phải kiểm tra đúng quyền phát và các điều kiện. Không tải/rip audio từ YouTube qua app; nhạc mặc định lấy từ kênh tải chính thức của tác giả.
 
@@ -131,4 +131,9 @@ Dữ liệu chặng, tổng thứ tự vòng, phiếu và huy hiệu được l�
 
 ## Cập nhật mà không tắt buổi LIVE
 
-Chạy `node tools/build-vercel.mjs` trước khi đẩy mã; công cụ tự gắn dấu phiên bản theo nội dung giao diện. Máy chủ thông báo phiên bản mới qua trạng thái game. Overlay chỉ tự tải lại khi đáp án đang hiện và đã kiểm tra tệp giao diện mới tải được; không yêu cầu tắt Go LIVE. Có chống tải lại lặp nếu CDN chưa đồng bộ. Bàn điều khiển không tự tải lại để giữ nhạc/MC, chỉ hiện nút cập nhật. Cần tải lại nguồn Link một lần để cài cơ chế này cho nguồn đang mở từ phiên bản cũ.
+Chạy `node tools/build-vercel.mjs` trước khi đẩy mã; công cụ tự gắn dấu phiên bản theo nội dung giao diện. Máy chủ thông báo phiên bản mới qua trạng thái game. Overlay chỉ tự tải lại khi đáp án đang hiện và đã kiểm tra tệp giao diện mới tải được; không yêu cầu tắt Go LIVE. Có chống tải lại lặp nếu CDN chưa đồng bộ. Bàn điều khiển chỉ hiện nút cập nhật; nhạc/MC tiếp tục ở nguồn overlay kể cả khi đóng hoặc tải lại bàn điều khiển. Cần tải lại nguồn Link một lần để cài cơ chế này cho nguồn đang mở từ phiên bản cũ.
+
+
+### Âm thanh trực tiếp từ overlay (06/11/2026)
+
+Thiết lập nằm trong audioSettings của data/live-scores.json và được phát cùng trạng thái game. POST /api/audio chỉ có trên máy điều khiển; relay công khai vẫn chặn mọi lệnh POST. MP3 MC được đọc qua cue-99.mp3 với nội dung giới hạn bởi vòng hiện tại và các lời dẫn cố định; không đọc văn bản tùy ý hoặc bình luận. Vercel có bộ chuyển tiếp MP3 cùng nguồn, không cần mở bảng điều khiển để lấy tiếng. Trong cùng trình duyệt/profile, các overlay chia quyền phát qua BroadcastChannel; giữa hai trình duyệt/profile khác nhau vẫn cần chỉ giữ một nguồn có tiếng. Chính sách tự phát phụ thuộc trình duyệt/Studio, không thể bỏ qua bằng mã trang web.
